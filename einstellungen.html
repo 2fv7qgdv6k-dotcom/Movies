@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Filme">
+<meta name="theme-color" content="#e0463b">
+<title>Einstellungen</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg1:#e8ecf7;--bg2:#f8e8ee;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.8);--fg:#111118;--mut:#65657a;--ac:#e0463b;--bd:rgba(127,127,150,.2)}
+:root[data-theme="dark"],:root[data-theme="cinema"]{--bg1:#0a0a12;--bg2:#1b1025;--glass:rgba(60,60,78,.45);--glass2:rgba(44,44,60,.85);--fg:#f2f2f7;--mut:#a4a4b6}
+:root[data-theme="cinema"]{--bg1:#000;--bg2:#06060a;--glass:rgba(22,22,28,.7);--glass2:rgba(12,12,16,.92);--fg:#f4f1ea;--mut:#8a8a94}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#0a0a12;--bg2:#1b1025;--glass:rgba(60,60,78,.45);--glass2:rgba(44,44,60,.85);--fg:#f2f2f7;--mut:#a4a4b6}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:15px -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--fg);background:linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 40px}
+.wrap{max-width:680px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+h1{font-size:24px;margin:0;letter-spacing:-.3px}
+a.back{color:var(--ac);text-decoration:none;font-weight:600}
+h3{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:22px 0 8px;font-weight:600}
+.card{background:var(--glass);border:1px solid var(--bd);border-radius:20px;padding:14px 16px;margin-bottom:10px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+input,textarea{width:100%;font:inherit;padding:11px 13px;border-radius:13px;border:1px solid var(--bd);background:var(--glass2);color:var(--fg);outline:none}
+button{font:inherit;padding:10px 14px;border-radius:13px;border:1px solid var(--bd);background:var(--glass2);color:var(--fg);cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:transparent}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.seg{display:inline-flex;background:var(--glass);border:1px solid var(--bd);border-radius:14px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:8px 12px;border-radius:11px;color:var(--mut)}
+.seg button.on{background:var(--glass2);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.sw{display:flex;gap:9px;flex-wrap:wrap}
+.swb{width:32px;height:32px;border-radius:50%;padding:0;border:1px solid var(--bd)}
+.swb.on{outline:2px solid var(--fg);outline-offset:2px}
+.fskrow{display:flex;align-items:center;gap:12px;margin:10px 0}
+.fsk{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.chip{padding:6px 11px;border-radius:999px;font-size:13px;background:var(--glass);border:1px solid var(--bd)}
+.mut{color:var(--mut)}
+.status{font-size:13px;color:var(--mut);margin-top:10px;min-height:1em}
+</style></head>
+<body>
+<div class="wrap">
+<div class="top"><h1>Einstellungen</h1><a class="back" href="index.html">Fertig</a></div>
+
+<h3>Datenquellen</h3>
+<div class="card">
+<label>TMDB-Schlüssel (für Filminfos)</label><input id="k1" autocomplete="off">
+<label>OMDb-Schlüssel (für die IMDb-Wertung, optional)</label><input id="k2" autocomplete="off">
+<div class="row"><button class="p" onclick="saveKeys()">Speichern</button></div>
+<div class="status" id="s_keys"></div>
+</div>
+
+<h3>Erscheinungsbild</h3>
+<div class="card">
+<label>Design</label>
+<div class="seg" id="themeSeg">
+<button data-t="auto" onclick="setTheme('auto')">Auto</button><button data-t="dark" onclick="setTheme('dark')">Dunkel</button><button data-t="light" onclick="setTheme('light')">Hell</button><button data-t="cinema" onclick="setTheme('cinema')">Kino</button>
+</div>
+<label>Akzentfarbe</label>
+<div class="sw" id="accSw"></div>
+<label>Farben der Altersfreigaben</label>
+<div id="fskBox"></div>
+<div class="row"><button onclick="resetFsk()">Standardfarben</button></div>
+</div>
+
+<h3>Formate</h3>
+<div class="card">
+<div class="row" id="fmtList"></div>
+<div class="row"><input id="nf" placeholder="z. B. 3D Blu-ray" style="flex:1"><button onclick="addFmt()">Hinzufügen</button></div>
+</div>
+
+<h3>Konto & Sync</h3>
+<div class="card" id="accBox"></div>
+
+<h3>Sicherung</h3>
+<div class="card">
+<div class="row"><button onclick="exportAll()">Sammlung exportieren</button><button onclick="document.getElementById('imp').click()">Sicherung importieren</button><input id="imp" type="file" accept=".json" hidden></div>
+<div class="status" id="s_bak"></div>
+</div>
+
+<p class="mut" style="text-align:center;margin-top:24px">Version 1.1</p>
+</div>
+
+<script>
+const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
+const SB_KEY='sb_publishable_5yHZHjPfHjZpams4gvregw_fQZiw3Ko';
+const FORMATS_DEF=['Nicht angegeben','DVD','Blu-ray','4K UHD','VHS','HD DVD','LaserDisc','Sonstiges'];
+const FSK_DEF={'0':'#1e8e3e','6':'#e5b400','12':'#f08c00','16':'#e0463b','18':'#1f1f1f'};
+const PALETTE=['#1e8e3e','#2563eb','#0d9488','#e5b400','#f08c00','#e0463b','#7c3aed','#1f1f1f'];
+const ACCENTS={'Rot':'#e0463b','Blau':'#3b82f6','Gold':'#c9a227','Grün':'#1e8e3e','Violett':'#8b5cf6'};
+const $=s=>document.getElementById(s.replace('#',''));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
+let films=JSON.parse(localStorage.getItem('films')||'[]');
+let wish=JSON.parse(localStorage.getItem('wish')||'[]');
+function store(){localStorage.setItem('cfg',JSON.stringify(cfg))}
+function allFormats(){return cfg.formats||FORMATS_DEF}
+function fskColor(v){return (cfg.fskCol||{})[String(v)]||FSK_DEF[String(v)]||'#4b5563'}
+function applyTheme(){const t=cfg.theme||'auto';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)}
+function applyAccent(){document.documentElement.style.setProperty('--ac',cfg.accent||'#e0463b')}
+
+/* keys */
+function fillKeys(){$('k1').value=cfg.tmdb||'';$('k2').value=cfg.omdb||''}
+function saveKeys(){cfg.tmdb=$('k1').value.trim();cfg.omdb=$('k2').value.trim();store();$('s_keys').textContent='Gespeichert.'}
+
+/* theme and accent */
+function markTheme(){const t=cfg.theme||'auto';document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t))}
+function setTheme(t){cfg.theme=t;store();applyTheme();markTheme()}
+function renderAccent(){$('accSw').innerHTML=Object.entries(ACCENTS).map(([n,c])=>`<button class="swb ${(cfg.accent||'#e0463b')===c?'on':''}" title="${n}" style="background:${c}" onclick="setAccent('${c}')"></button>`).join('')}
+function setAccent(c){cfg.accent=c;store();applyAccent();renderAccent()}
+
+/* altersfreigaben */
+function renderFsk(){$('fskBox').innerHTML=['0','6','12','16','18'].map(k=>`<div class="fskrow"><span class="fsk" style="background:${fskColor(k)}">${k}</span><div class="sw">${PALETTE.map(c=>`<button class="swb ${fskColor(k)===c?'on':''}" style="background:${c}" onclick="setFsk('${k}','${c}')"></button>`).join('')}</div></div>`).join('')}
+function setFsk(k,c){cfg.fskCol={...(cfg.fskCol||{}),[k]:c};store();renderFsk()}
+function resetFsk(){delete cfg.fskCol;store();renderFsk()}
+
+/* formats */
+function renderFmt(){$('fmtList').innerHTML=allFormats().map((x,i)=>`<span class="chip">${esc(x)} <a href="#" onclick="delFmt(${i});return false" style="color:var(--mut);text-decoration:none">✕</a></span>`).join('')}
+function addFmt(){const v=$('nf').value.trim();if(!v)return;cfg.formats=[...allFormats()];if(!cfg.formats.includes(v))cfg.formats.push(v);store();$('nf').value='';renderFmt()}
+function delFmt(i){cfg.formats=[...allFormats()];cfg.formats.splice(i,1);store();renderFmt()}
+
+/* konto */
+let sb=null,user=null;
+function initSb(){if(!window.supabase)return;sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
+ sb.auth.getSession().then(({data})=>{user=data.session?.user||null;renderAcc()})}
+function renderAcc(msg){$('accBox').innerHTML=user
+ ?`<p class="mut">Angemeldet als ${esc(user.email||'')}. Die App synchronisiert beim nächsten Öffnen.</p><div class="row"><button onclick="signOut()">Abmelden</button></div>`
+ :`<label>E-Mail</label><input id="em" type="email" autocomplete="email"><label>Passwort</label><input id="pw" type="password" autocomplete="current-password"><div class="row"><button class="p" onclick="signIn()">Anmelden</button><button onclick="signUp()">Konto anlegen</button></div>`
+ +`<div class="status" id="s_acc">${esc(msg||'')}</div>`}
+async function signIn(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)return renderAcc('Bitte E-Mail und Passwort eingeben.');
+ const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
+ if(error)return renderAcc('Anmeldung fehlgeschlagen: '+error.message);user=data.user;renderAcc('Angemeldet.')}
+async function signUp(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)return renderAcc('Bitte E-Mail und Passwort eingeben.');
+ const {error}=await sb.auth.signUp({email:e,password:p});
+ renderAcc(error?'Fehler: '+error.message:'Konto angelegt. Falls eine Bestätigungsmail kommt, den Link öffnen und danach hier anmelden.')}
+async function signOut(){await sb.auth.signOut();user=null;renderAcc('Abgemeldet.')}
+
+/* sicherung */
+function exportAll(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({films,wish,cfg},null,1)],{type:'application/json'}));a.download='filmsammlung-'+new Date().toISOString().slice(0,10)+'.json';a.click();cfg.lastBackup=Date.now();store();$('s_bak').textContent='Sicherung erstellt.'}
+$('imp').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
+ try{const j=JSON.parse(await f.text());if(!j||Array.isArray(j)||!Array.isArray(j.films))throw new Error('Keine Sammlungsdatei');
+  if(!confirm('Die aktuelle Sammlung auf diesem Gerät wird durch die Sicherung ersetzt. Fortfahren?'))return;
+  localStorage.setItem('films',JSON.stringify(j.films));localStorage.setItem('wish',JSON.stringify(j.wish||[]));
+  cfg={...cfg,...(j.cfg||{})};store();$('s_bak').textContent='Sicherung übernommen.'}
+ catch(err){$('s_bak').textContent='Import fehlgeschlagen: '+err.message}});
+
+fillKeys();applyTheme();applyAccent();markTheme();renderAccent();renderFsk();renderFmt();initSb();renderAcc();
+</script>
+</body></html>

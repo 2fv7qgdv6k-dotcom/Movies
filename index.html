@@ -173,6 +173,7 @@ dialog.out::backdrop{opacity:0;transition:opacity .22s}
 .abar button.p{background:transparent;color:var(--ac);box-shadow:none}
 .abar button .ic{width:20px;height:20px}
 .abar button .ic{display:block}
+.setv{position:fixed;inset:0;z-index:60;background:var(--bg1);overflow-y:auto;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 40px;-webkit-overflow-scrolling:touch}
 </style></head><body>
 <header>
 <h1>Filme <span class="mut" id="n"></span></h1>
@@ -186,7 +187,7 @@ dialog.out::backdrop{opacity:0;transition:opacity .22s}
 <select class="hid" id="so" onchange="draw()"><option value="t">A–Z</option><option value="y">Jahr</option><option value="a">Zuletzt hinzugefügt</option><option value="r">Filmreihe</option><option value="i">IMDb-Wertung</option><option value="g">Genre</option><option value="l">Nach Lagerort gruppiert</option></select>
 <button class="hid" id="bnb">Ohne Barcode</button><button class="hid" id="bad">Erweitert</button><button class="hid" id="bns">Ungesehen</button><button class="hid" id="bvw">Ansicht</button><button class="hid" id="bth">Auto</button>
 </header>
-<div id="recent"></div><div id="fbadge"></div><div id="grid"></div>
+<div id="recent"></div><div id="fbadge"></div><div id="setv" class="setv" style="display:none"></div><div id="grid"></div>
 <dialog id="dlg"></dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -198,7 +199,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.0.1';
+const APP_VERSION='1.1';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -448,7 +449,7 @@ function applyFilters(){$('#ff').value=$('#x_ff').value;$('#fr').value=$('#x_fr'
 function clearFilters(){noE=false;noSeen=false;adv={};$('#ff').value='';$('#fr').value='';$('#so').value='t';
  $('#bnb').className='';$('#bns').className='';$('#bad').className='';$('#dlg').close();draw()}
 function moreMenu(){const th=({auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Kino'})[cfg.theme||'auto'];
- const m=[['Schnellcheck','quick()',1],['Zufallsfilm','roulette()',1],['Verliehen','loans()',1],['Statistik','stats()',1],['Ansicht wechseln','toggleView()',1],['Design: '+th,'cycleTheme();moreMenu()',0],['Einstellungen','openSet()',1]];
+ const m=[['Schnellcheck','quick()',1],['Zufallsfilm','roulette()',1],['Verliehen','loans()',1],['Statistik','stats()',1],['Ansicht wechseln','toggleView()',1],['Design: '+th,'cycleTheme();moreMenu()',0],['Einstellungen',"location.href='einstellungen.html'",1]];
  $('#dlg').innerHTML=`<h2>Mehr</h2><div class="mlist">${m.map(([t,c,cl])=>`<button class="mrow" onclick="${cl?"$('#dlg').close();":''}${c}">${t}</button>`).join('')}</div>`;
  if(!$('#dlg').open)$('#dlg').showModal()}
 const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
@@ -671,18 +672,19 @@ async function gotCode(code){
 }
 
 function openSet(){
-  $('#dlg').innerHTML=`<h2>Einstellungen</h2><h3 class="sh">Datenquellen</h3>
+  $('#setv').innerHTML=`<div class="bar" style="justify-content:space-between;align-items:center"><h2>Einstellungen</h2><button class="p" onclick="closeSet()">Fertig</button></div><h3 class="sh">Datenquellen</h3>
   <label>TMDB API-Schlüssel (kostenlos auf themoviedb.org → Einstellungen → API) – nötig für Filminfos</label><input id="k1" value="${esc(cfg.tmdb||'')}">
   <label>OMDb API-Schlüssel (kostenlos auf omdbapi.com) – optional, für die echte IMDb-Wertung</label><input id="k2" value="${esc(cfg.omdb||'')}">
-  <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}${accountEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
+  <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}${accountEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();closeSet()">Speichern</button>
   <button onclick="exp()">Sammlung exportieren</button><button onclick="rematch()">Zuordnung korrigieren</button><button onclick="reloadAll()">Alle Filminfos neu laden</button><button onclick="$('#imp').click()">Importieren</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])"></div>
   <p class="mut" style="margin-top:18px">Version ${APP_VERSION}</p><p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
-  $('#dlg').showModal();
+  $('#setv').style.display='block';
 }
+function closeSet(){const v=$('#setv');v.style.display='none';v.innerHTML=''}
 async function reloadAll(){if(!confirm('Alle Filminfos neu von TMDB laden (holt FSK und Filmreihen)? Dauert ein paar Minuten.'))return;
- const q=films.filter(f=>f.tmdbId),tot=q.length;let n=0;$('#dlg').innerHTML='<h2>Aktualisiere…</h2><p id="pg"></p><p class="mut">Bitte Fenster offen lassen.</p>';
+ const q=films.filter(f=>f.tmdbId),tot=q.length;let n=0;$('#setv').innerHTML='<h2>Aktualisiere…</h2><p id="pg"></p><p class="mut">Bitte Fenster offen lassen.</p>';
  const w=async()=>{for(let f;f=q.shift();){try{f.d=await fetchDetails(f.tmdbId)}catch(e){}n++;$('#pg').textContent=n+' / '+tot;if(n%25===0){save();draw()}}};
- await Promise.all([w(),w(),w(),w()]);save();draw();$('#dlg').close()}
+ await Promise.all([w(),w(),w(),w()]);save();draw();closeSet()}
 async function rematch(){
  const q=films.filter(f=>f.title0&&!f.manual);
  if(!q.length)return alert('Keine Filme zum Prüfen.');
@@ -698,10 +700,10 @@ async function rematch(){
 
 function exp(){cfg.lastBackup=Date.now();save();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({films,wish,cfg},null,1)],{type:'application/json'}));a.download='filmsammlung-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 async function imp(file){let j;try{j=JSON.parse(await file.text())}catch(e){return alert('Ungültige Datei')}
- if(!Array.isArray(j)){films=j.films||[];wish=j.wish||[];cfg={...cfg,...j.cfg};save();draw();$('#dlg').close();return}
+ if(!Array.isArray(j)){films=j.films||[];wish=j.wish||[];cfg={...cfg,...j.cfg};save();draw();closeSet();return}
  if(!cfg.tmdb)return alert('Bitte zuerst den TMDB-Schlüssel speichern.');
  const have=new Set(films.map(f=>f.title0));const q=j.filter(x=>!have.has(x.title)),total=q.length;let n=0,bad=0;
- $('#dlg').innerHTML='<h2>Import läuft…</h2><p id="pg"></p><p class="mut">Bitte dieses Fenster offen lassen.</p>';
+ $('#setv').innerHTML='<h2>Import läuft…</h2><p id="pg"></p><p class="mut">Bitte dieses Fenster offen lassen.</p>';
  const clean=s=>s.replace(/[–:&’'.]/g,' ').replace(/\s+/g,' ').trim();
  const taken=new Set(films.filter(f=>f.tmdbId).map(f=>f.tmdbId));
  const work=async()=>{for(let x;x=q.shift();){
@@ -710,7 +712,7 @@ async function imp(file){let j;try{j=JSON.parse(await file.text())}catch(e){retu
   if(!f.d){bad++;f.d={title:x.title,orig:'',year:'',poster:null,overview:'',genres:[],countries:[],directors:[],cast:[],unmatched:true}}
   films.push(f);n++;$('#pg').textContent=`${n} / ${total} (nicht zugeordnet: ${bad})`;if(n%25===0){save();draw()}}};
  await Promise.all([work(),work(),work(),work()]);save();draw();
- $('#dlg').innerHTML=`<h2>Fertig</h2><p>${n} Filme importiert, ${bad} konnten nicht automatisch zugeordnet werden (mit ⚠ markiert).</p><div class="bar"><button class="p" onclick="$('#dlg').close()">OK</button></div>`}
+ $('#setv').innerHTML=`<h2>Fertig</h2><p>${n} Filme importiert, ${bad} konnten nicht automatisch zugeordnet werden (mit ⚠ markiert).</p><div class="bar"><button class="p" onclick="closeSet()">OK</button></div>`}
 applyTheme();applyAccent();sbInit();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 draw();if(!cfg.tmdb)setTimeout(openSet,300);
