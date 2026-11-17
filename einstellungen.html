@@ -61,6 +61,13 @@ button.p{background:var(--ac);color:#fff;border-color:transparent}
 <div class="row"><button onclick="resetFsk()">Standardfarben</button></div>
 </div>
 
+<h3>Filmdaten</h3>
+<div class="card">
+<p class="mut" style="margin:0 0 10px">Holt für alle Filme die IMDb-Wertung nach, sobald ein OMDb-Schlüssel eingetragen ist. Das dauert ein paar Minuten, die Seite muss offen bleiben.</p>
+<div class="row"><button class="p" onclick="imdbAll()">IMDb-Wertungen laden</button></div>
+<div class="status" id="s_imdb"></div>
+</div>
+
 <h3>Formate</h3>
 <div class="card">
 <div class="row" id="fmtList"></div>
@@ -76,7 +83,7 @@ button.p{background:var(--ac);color:#fff;border-color:transparent}
 <div class="status" id="s_bak"></div>
 </div>
 
-<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.2</p>
+<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.3</p>
 </div>
 
 <script>
@@ -132,6 +139,25 @@ async function signUp(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)r
  const {error}=await sb.auth.signUp({email:e,password:p});
  renderAcc(error?'Fehler: '+error.message:'Konto angelegt. Falls eine Bestätigungsmail kommt, den Link öffnen und danach hier anmelden.')}
 async function signOut(){await sb.auth.signOut();user=null;renderAcc('Abgemeldet.')}
+
+/* imdb ratings from OMDb for films that have none yet */
+async function imdbAll(){
+ if(!cfg.omdb)return $('s_imdb').textContent='Bitte zuerst den OMDb-Schlüssel eintragen und speichern.';
+ films=JSON.parse(localStorage.getItem('films')||'[]');
+ const todo=films.filter(f=>f.d&&!f.d.imdb&&f.d.imdbId);
+ if(!todo.length)return $('s_imdb').textContent='Alle Filme mit IMDb-ID haben bereits eine Wertung oder keine ID vorhanden.';
+ let n=0,ok=0,stop=false;
+ const upd=()=>$('s_imdb').textContent=`${n} / ${todo.length} geprüft, ${ok} Wertungen gefunden`;
+ const worker=async()=>{for(let f;!stop&&(f=todo.shift());){
+   try{const r=await (await fetch(`https://www.omdbapi.com/?i=${f.d.imdbId}&apikey=${encodeURIComponent(cfg.omdb.trim())}`)).json();
+     if(r.Error&&/limit/i.test(r.Error)){stop=true;$('s_imdb').textContent='Tageslimit von OMDb erreicht. Morgen erneut starten.';return}
+     if(r.imdbRating&&r.imdbRating!=='N/A'){f.d.imdb=r.imdbRating;ok++}
+   }catch(e){}
+   n++;upd()}};
+ await Promise.all([worker(),worker(),worker(),worker()]);
+ localStorage.setItem('films',JSON.stringify(films));
+ if(!stop)$('s_imdb').textContent=`Fertig: ${ok} Wertungen gefunden. Zurück zur Sammlung, dort siehst du sie.`;
+}
 
 /* sicherung */
 function exportAll(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({films,wish,cfg},null,1)],{type:'application/json'}));a.download='filmsammlung-'+new Date().toISOString().slice(0,10)+'.json';a.click();cfg.lastBackup=Date.now();store();$('s_bak').textContent='Sicherung erstellt.'}
