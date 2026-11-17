@@ -199,7 +199,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.1';
+const APP_VERSION='1.1.1';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -491,9 +491,6 @@ function accInner(){return sbUser?
  `<p class="mut">Angemeldet als ${esc(sbUser.email||'')}. Änderungen werden automatisch gespeichert.</p><div class="bar"><button onclick="pullNow()">Jetzt synchronisieren</button><button onclick="copyFriendLink()">Freundes-Link anzeigen</button><button onclick="sbLogout()">Abmelden</button></div>`
  :`<label>E-Mail</label><input id="acc_mail" type="email" autocomplete="email"><label>Passwort</label><input id="acc_pw" type="password" autocomplete="current-password"><div class="bar"><button class="p" onclick="sbLogin()">Anmelden</button><button onclick="sbSignup()">Konto anlegen</button></div>`}
 function accountEditor(){return `<h3 class="sh">Konto & Sync</h3><div id="acc">${accInner()}</div><small id="syncmsg" class="mut"></small>`}
-const _dlgClose=HTMLDialogElement.prototype.close;
-HTMLDialogElement.prototype.close=function(){if(this.open&&!this.classList.contains('out')){this.classList.add('out');
- setTimeout(()=>{this.classList.remove('out');_dlgClose.call(this)},220)}else if(this.open){_dlgClose.call(this)}};
 addEventListener('scroll',()=>document.querySelector('header').classList.toggle('sc',scrollY>30),{passive:true});
 function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
  ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
