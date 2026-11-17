@@ -198,6 +198,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
+const APP_VERSION='1.0';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -361,7 +362,7 @@ document.addEventListener('touchend',e=>{if($('#dlg').open)return;const dx=e.cha
 // Every new dialog content starts at the top
 new MutationObserver(()=>{$('#dlg').scrollTop=0}).observe($('#dlg'),{childList:true});
 // Tap next to a dialog closes it
-$('#dlg').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+$('#dlg').addEventListener('click',e=>{const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.currentTarget.close()});
 
 function applyTheme(){const t=cfg.theme||'auto';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
  const b=$('#bth');if(b)b.textContent={auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Kino'}[t]}
@@ -456,7 +457,7 @@ let sb=null,sbUser=null,pushT=null;
 function sbInit(){if(!window.supabase)return;
  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
  sb.auth.onAuthStateChange((ev,session)=>{const was=sbUser;sbUser=session?.user||null;if(sbUser&&!was)pullNow();if(!sbUser&&was)setSync('Abgemeldet');
-  const a=$('#acc');if(a&&$('#dlg').open)openSet()});
+  const a=$('#acc');if(a)a.innerHTML=accInner()});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&sbUser)pullNow()})}
 function setSync(t){const e=$('#syncmsg');if(e)e.textContent=t}
 function queuePush(){if(!sbUser)return;clearTimeout(pushT);pushT=setTimeout(pushNow,1500)}
@@ -485,9 +486,10 @@ async function sbSignup(){const e=$('#acc_mail').value.trim(),p=$('#acc_pw').val
 async function sbLogout(){await sb.auth.signOut();sbUser=null;setSync('Abgemeldet')}
 function copyFriendLink(){const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'freunde.html?u='+sbUser.id;
  setSync('Freundes-Link: '+link);navigator.clipboard?.writeText(link).catch(()=>{})}
-function accountEditor(){return `<h3 class="sh">Konto & Sync</h3><div id="acc">${sbUser?
+function accInner(){return sbUser?
  `<p class="mut">Angemeldet als ${esc(sbUser.email||'')}. Änderungen werden automatisch gespeichert.</p><div class="bar"><button onclick="pullNow()">Jetzt synchronisieren</button><button onclick="copyFriendLink()">Freundes-Link anzeigen</button><button onclick="sbLogout()">Abmelden</button></div>`
- :`<label>E-Mail</label><input id="acc_mail" type="email" autocomplete="email"><label>Passwort</label><input id="acc_pw" type="password" autocomplete="current-password"><div class="bar"><button class="p" onclick="sbLogin()">Anmelden</button><button onclick="sbSignup()">Konto anlegen</button></div>`}</div><small id="syncmsg" class="mut"></small>`}
+ :`<label>E-Mail</label><input id="acc_mail" type="email" autocomplete="email"><label>Passwort</label><input id="acc_pw" type="password" autocomplete="current-password"><div class="bar"><button class="p" onclick="sbLogin()">Anmelden</button><button onclick="sbSignup()">Konto anlegen</button></div>`}
+function accountEditor(){return `<h3 class="sh">Konto & Sync</h3><div id="acc">${accInner()}</div><small id="syncmsg" class="mut"></small>`}
 const _dlgClose=HTMLDialogElement.prototype.close;
 HTMLDialogElement.prototype.close=function(){if(this.open&&!this.classList.contains('out')){this.classList.add('out');
  setTimeout(()=>{this.classList.remove('out');_dlgClose.call(this)},220)}else if(this.open){_dlgClose.call(this)}};
@@ -674,7 +676,7 @@ function openSet(){
   <label>OMDb API-Schlüssel (kostenlos auf omdbapi.com) – optional, für die echte IMDb-Wertung</label><input id="k2" value="${esc(cfg.omdb||'')}">
   <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}${accountEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
   <button onclick="exp()">Sammlung exportieren</button><button onclick="rematch()">Zuordnung korrigieren</button><button onclick="reloadAll()">Alle Filminfos neu laden</button><button onclick="$('#imp').click()">Importieren</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])"></div>
-  <p class="mut" style="margin-top:18px">Version 2026-11-17 · Design-Update</p><p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
+  <p class="mut" style="margin-top:18px">Version ${APP_VERSION}</p><p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
   $('#dlg').showModal();
 }
 async function reloadAll(){if(!confirm('Alle Filminfos neu von TMDB laden (holt FSK und Filmreihen)? Dauert ein paar Minuten.'))return;
