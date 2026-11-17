@@ -152,6 +152,7 @@ dialog a:not(.chip2){color:var(--fg);text-decoration:underline;text-decoration-c
 .sh{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px;font-weight:600}
 .tgl label{display:flex;align-items:center;gap:8px;margin:8px 0;color:var(--fg)}
 @media (max-width:600px){header h1{display:none}}
+.sh{}
 </style></head><body>
 <header>
 <h1>Filme <span class="mut" id="n"></span></h1>
@@ -168,6 +169,7 @@ dialog a:not(.chip2){color:var(--fg);text-decoration:underline;text-decoration-c
 <div id="recent"></div><div id="fbadge"></div><div id="grid"></div>
 <dialog id="dlg"></dialog>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 const FORMATS=['Nicht angegeben','DVD','Blu-ray','4K UHD','VHS','HD DVD','LaserDisc','Sonstiges'];
 const $=s=>document.querySelector(s);
@@ -178,7 +180,8 @@ let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
-const save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
+const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
+const save=()=>{_save();queuePush()};
 const wiki=n=>`https://de.wikipedia.org/w/index.php?search=${encodeURIComponent(n)}&go=Go`;
 
 async function tmdb(path,p={}){
@@ -430,6 +433,44 @@ function moreMenu(){const th=({auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Ki
  const m=[['Schnellcheck','quick()',1],['Zufallsfilm','roulette()',1],['Verliehen','loans()',1],['Statistik','stats()',1],['Ansicht wechseln','toggleView()',1],['Design: '+th,'cycleTheme();moreMenu()',0],['Einstellungen','openSet()',1]];
  $('#dlg').innerHTML=`<h2>Mehr</h2><div class="mlist">${m.map(([t,c,cl])=>`<button class="mrow" onclick="${cl?"$('#dlg').close();":''}${c}">${t}</button>`).join('')}</div>`;
  if(!$('#dlg').open)$('#dlg').showModal()}
+const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
+const SB_KEY='sb_publishable_5yHZHjPfHjZpams4gvregw_fQZiw3Ko';
+let sb=null,sbUser=null,pushT=null;
+function sbInit(){if(!window.supabase)return;
+ sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
+ sb.auth.onAuthStateChange((ev,session)=>{const was=sbUser;sbUser=session?.user||null;if(sbUser&&!was)pullNow();if(!sbUser&&was)setSync('Abgemeldet');
+  const a=$('#acc');if(a&&$('#dlg').open)openSet()});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&sbUser)pullNow()})}
+function setSync(t){const e=$('#syncmsg');if(e)e.textContent=t}
+function queuePush(){if(!sbUser)return;clearTimeout(pushT);pushT=setTimeout(pushNow,1500)}
+async function pushNow(){if(!sbUser||!sb)return;
+ const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box}));
+ const data={films,wish,cfg:{formats:cfg.formats,accent:cfg.accent,theme:cfg.theme,fskCol:cfg.fskCol,lastFormat:cfg.lastFormat}};
+ const now=new Date().toISOString();
+ const {error}=await sb.from('collections').upsert({user_id:sbUser.id,data,public_data:{films:pub,updated_at:now},updated_at:now},{onConflict:'user_id'});
+ if(error){setSync('Speichern fehlgeschlagen: '+error.message+' (Daten bleiben auf diesem Gerät)');return}
+ localStorage.setItem('syncAt',now);setSync('Synchronisiert um '+new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'}))}
+async function pullNow(){if(!sbUser||!sb)return;
+ const {data:row,error}=await sb.from('collections').select('data,updated_at').eq('user_id',sbUser.id).maybeSingle();
+ if(error){setSync('Laden fehlgeschlagen: '+error.message);return}
+ if(!row){await pushNow();return}
+ const synced=localStorage.getItem('syncAt')||'';
+ if(!synced&&films.length&&!confirm('Auf dem Server liegt schon eine Sammlung. OK = Server-Stand auf diesem Gerät übernehmen. Abbrechen = dieses Gerät überschreibt den Server.')){await pushNow();return}
+ if(row.updated_at>synced){localStorage.setItem('backup_pre_sync',JSON.stringify({films,wish}));
+  films=row.data.films||films;wish=row.data.wish||wish;cfg={...cfg,...(row.data.cfg||{})};_save();draw();setSync('Von einem anderen Gerät übernommen')}
+ else{await pushNow()}}
+async function sbLogin(){const e=$('#acc_mail').value.trim(),p=$('#acc_pw').value;if(!e||!p)return setSync('Bitte E-Mail und Passwort eingeben');
+ setSync('Anmeldung läuft…');const {error}=await sb.auth.signInWithPassword({email:e,password:p});
+ setSync(error?'Anmeldung fehlgeschlagen: '+error.message:'Angemeldet')}
+async function sbSignup(){const e=$('#acc_mail').value.trim(),p=$('#acc_pw').value;if(!e||!p)return setSync('Bitte E-Mail und Passwort eingeben');
+ const {error}=await sb.auth.signUp({email:e,password:p,options:{emailRedirectTo:location.origin+location.pathname}});
+ setSync(error?'Fehler: '+error.message:'Konto angelegt. Bitte den Bestätigungslink in der E-Mail öffnen (er öffnet sich in Safari), danach hier anmelden.')}
+async function sbLogout(){await sb.auth.signOut();sbUser=null;setSync('Abgemeldet')}
+function copyFriendLink(){const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'freunde.html?u='+sbUser.id;
+ setSync('Freundes-Link: '+link);navigator.clipboard?.writeText(link).catch(()=>{})}
+function accountEditor(){return `<h3 class="sh">Konto & Sync</h3><div id="acc">${sbUser?
+ `<p class="mut">Angemeldet als ${esc(sbUser.email||'')}. Änderungen werden automatisch gespeichert.</p><div class="bar"><button onclick="pullNow()">Jetzt synchronisieren</button><button onclick="copyFriendLink()">Freundes-Link anzeigen</button><button onclick="sbLogout()">Abmelden</button></div>`
+ :`<label>E-Mail</label><input id="acc_mail" type="email" autocomplete="email"><label>Passwort</label><input id="acc_pw" type="password" autocomplete="current-password"><div class="bar"><button class="p" onclick="sbLogin()">Anmelden</button><button onclick="sbSignup()">Konto anlegen</button></div>`}</div><small id="syncmsg" class="mut"></small>`}
 function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
  ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
  $('#addb').setAttribute('aria-label',t==='films'?'Hinzufügen':'Wunsch hinzufügen');
@@ -610,7 +651,7 @@ function openSet(){
   $('#dlg').innerHTML=`<h2>Einstellungen</h2><h3 class="sh">Datenquellen</h3>
   <label>TMDB API-Schlüssel (kostenlos auf themoviedb.org → Einstellungen → API) – nötig für Filminfos</label><input id="k1" value="${esc(cfg.tmdb||'')}">
   <label>OMDb API-Schlüssel (kostenlos auf omdbapi.com) – optional, für die echte IMDb-Wertung</label><input id="k2" value="${esc(cfg.omdb||'')}">
-  <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
+  <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}${accountEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
   <button onclick="exp()">Sammlung exportieren</button><button onclick="rematch()">Zuordnung korrigieren</button><button onclick="reloadAll()">Alle Filminfos neu laden</button><button onclick="$('#imp').click()">Importieren</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])"></div>
   <p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
   $('#dlg').showModal();
@@ -647,7 +688,7 @@ async function imp(file){let j;try{j=JSON.parse(await file.text())}catch(e){retu
   films.push(f);n++;$('#pg').textContent=`${n} / ${total} (nicht zugeordnet: ${bad})`;if(n%25===0){save();draw()}}};
  await Promise.all([work(),work(),work(),work()]);save();draw();
  $('#dlg').innerHTML=`<h2>Fertig</h2><p>${n} Filme importiert, ${bad} konnten nicht automatisch zugeordnet werden (mit ⚠ markiert).</p><div class="bar"><button class="p" onclick="$('#dlg').close()">OK</button></div>`}
-applyTheme();applyAccent();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+applyTheme();applyAccent();sbInit();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 draw();if(!cfg.tmdb)setTimeout(openSet,300);
 </script></body></html>
