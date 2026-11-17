@@ -267,10 +267,7 @@ function badgesOf(f){const t=[f.edition,f.notes,f.format].filter(Boolean).join('
 function listItem(f){const p=f.cover||(f.d.poster?IMG+'w92'+f.d.poster:'');
  return `<div class="li" onclick="openDetail('${f.id}')">${p?`<img loading="lazy" src="${p}">`:`<div class="np">${esc(f.d.title)}</div>`}<div style="flex:1;min-width:0"><b>${esc(f.d.title)}</b><br><small class="mut">${esc(f.d.year)} · ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.seen?' · ✓ gesehen':''}</small></div></div>`}
 function toggleView(){view=view==='list'?'grid':'list';localStorage.setItem('view',view);draw();const g=$('#grid');g.classList.remove('swap');void g.offsetWidth;g.classList.add('swap')}
-function renderRecent(){const el=$('#recent');if(!el)return;
- const ids=(cfg.recent||[]).filter(id=>films.some(f=>f.id===id));
- el.innerHTML=(tab==='films'&&ids.length)?`<div class="rl"><small class="mut">Zuletzt angesehen</small><div class="rs">${ids.map(id=>{const f=films.find(x=>x.id===id);const p=f.cover||(f.d.poster?IMG+'w92'+f.d.poster:'');
-  return p?`<img title="${esc(f.d.title)}" onclick="openDetail('${id}')" src="${p}">`:`<div class="rn" onclick="openDetail('${id}')">${esc(f.d.title)}</div>`}).join('')}</div></div>`:''}
+function renderRecent(){const el=$('#recent');if(el)el.innerHTML=''}
 function dupWarn(id){if(id||!draft.tmdbId)return'';const dup=films.filter(x=>x.tmdbId===draft.tmdbId);
  return dup.length?`<div class="box" style="border-color:var(--ac)"><b>⚠ Diesen Film hast du schon</b><br>${dup.map(x=>esc([x.format,x.edition].filter(Boolean).join(' – '))).join('<br>')}<br><small class="mut">Trotzdem hinzufügen, wenn es eine zweite Version ist.</small></div>`:''}
 function toggleSeen(id){const f=films.find(x=>x.id===id);f.seen=!f.seen;save();draw();openDetail(id)}
@@ -653,7 +650,7 @@ function openSet(){
   <label>OMDb API-Schlüssel (kostenlos auf omdbapi.com) – optional, für die echte IMDb-Wertung</label><input id="k2" value="${esc(cfg.omdb||'')}">
   <h3 class="sh">Sammlung</h3>${fmtEditor()}<h3 class="sh">Erscheinungsbild</h3>${accentEditor()}${fskEditor()}${accountEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
   <button onclick="exp()">Sammlung exportieren</button><button onclick="rematch()">Zuordnung korrigieren</button><button onclick="reloadAll()">Alle Filminfos neu laden</button><button onclick="$('#imp').click()">Importieren</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])"></div>
-  <p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
+  <p class="mut" style="margin-top:18px">Version 2026-11-17 · Zahnrad-Menü</p><p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
   $('#dlg').showModal();
 }
 async function reloadAll(){if(!confirm('Alle Filminfos neu von TMDB laden (holt FSK und Filmreihen)? Dauert ein paar Minuten.'))return;
