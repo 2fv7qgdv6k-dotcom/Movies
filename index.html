@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meine Filmsammlung</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Filme">
+<meta name="theme-color" content="#e0463b">
+<style>
+:root{--bg1:#e8ecf7;--bg2:#f8e8ee;--glass:rgba(255,255,255,.5);--glass2:rgba(255,255,255,.72);--fg:#111118;--mut:#65657a;--ac:#e0463b;--bd:rgba(255,255,255,.75);--sh:0 10px 30px rgba(30,30,60,.14)}
+@media(prefers-color-scheme:dark){:root{--bg1:#0a0a12;--bg2:#1b1025;--glass:rgba(60,60,78,.45);--glass2:rgba(44,44,60,.78);--fg:#f2f2f7;--mut:#a4a4b6;--bd:rgba(255,255,255,.14);--sh:0 10px 30px rgba(0,0,0,.45)}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font:15px -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;color:var(--fg);background:radial-gradient(900px 500px at 0% -10%,rgba(255,150,170,.35),transparent 60%),radial-gradient(800px 500px at 110% 0%,rgba(120,170,255,.35),transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg2)) fixed;padding-bottom:env(safe-area-inset-bottom,0px)}
+header{position:sticky;top:0;z-index:5;background:var(--glass2);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border-bottom:1px solid var(--bd);padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;box-shadow:0 1px 0 rgba(255,255,255,.2)}
+header h1{font-size:19px;margin:0 6px 0 0;font-weight:700;letter-spacing:-.2px}
+input,select,textarea,button{font:inherit;padding:9px 13px;border-radius:13px;border:1px solid var(--bd);background:var(--glass2);color:var(--fg);outline:none}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(224,70,59,.25)}
+button{cursor:pointer;transition:transform .12s,background .2s}
+button:active{transform:scale(.96)}
+button.p{background:linear-gradient(180deg,#ff7065,var(--ac));color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(224,70,59,.35)}
+#q{flex:1;min-width:140px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;padding:16px}
+.c{background:var(--glass);border:1px solid var(--bd);border-radius:20px;overflow:hidden;cursor:pointer;position:relative;box-shadow:var(--sh);transition:transform .18s}
+.c:active{transform:scale(.97)}
+.c img,.c .np{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#8888}
+.c .np{display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;color:#fff;font-weight:600}
+.c .f{position:absolute;top:8px;left:8px;background:rgba(15,15,25,.55);color:#fff;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.c .t{padding:9px 11px;font-size:13px;line-height:1.3;font-weight:500}.c .t small{color:var(--mut)}
+dialog{width:min(780px,94vw);max-height:90vh;border:1px solid var(--bd);border-radius:26px;background:var(--glass2);backdrop-filter:blur(30px) saturate(180%);-webkit-backdrop-filter:blur(30px) saturate(180%);color:var(--fg);padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,10,20,.3);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.row{display:flex;gap:16px;flex-wrap:wrap}.row>img{width:170px;border-radius:16px;align-self:flex-start;box-shadow:var(--sh)}
+.row>div{flex:1;min-width:220px}
+a{color:var(--ac);text-decoration:none}h2{margin:0 0 6px;font-size:21px;letter-spacing:-.3px}.mut{color:var(--mut)}
+.box{background:var(--glass);border:1px solid var(--bd);border-radius:16px;padding:12px 14px;margin:10px 0}
+.res{display:flex;gap:12px;padding:10px;border-radius:14px;cursor:pointer;align-items:center}
+.res img{width:46px;border-radius:7px}.res:hover{background:var(--glass)}
+iframe,video{width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background:#000}
+label{display:block;margin:12px 0 5px;font-size:13px;color:var(--mut);font-weight:500}
+label+input,label+select,label+textarea{width:100%}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.f2{background:var(--glass);border:1px solid var(--bd);padding:5px 11px;border-radius:999px;font-size:13px}
+
+dialog{background:linear-gradient(180deg,var(--tint,transparent),transparent 55%),var(--glass2)!important}
+dialog[open]{animation:pop .32s cubic-bezier(.2,.9,.3,1.04)}
+dialog[open]::backdrop{animation:fade .3s}
+@keyframes pop{from{opacity:0;transform:translateY(28px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}}
+.row>img{animation:cov .5s .05s both cubic-bezier(.2,.9,.3,1)}
+@keyframes cov{from{opacity:0;transform:translateX(-24px) scale(.85)}}
+.c img{background:linear-gradient(90deg,#8883 25%,#bbb5 50%,#8883 75%);background-size:200% 100%;animation:sk 1.4s infinite linear}
+@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+#grid.list{display:flex;flex-direction:column;gap:8px}
+.li{display:flex;gap:12px;align-items:center;padding:8px 10px;border-radius:18px;background:var(--glass);border:1px solid var(--bd);cursor:pointer}
+.li img,.li .np{width:46px;height:69px;border-radius:9px;object-fit:cover;flex:none;font-size:9px;padding:3px}
+.c .bd{position:absolute;right:8px;background:var(--ac);color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px}
+.rl{padding:12px 16px 0}.rs{display:flex;gap:10px;overflow-x:auto;padding:6px 0 4px}
+.rs img{width:58px;height:87px;border-radius:12px;object-fit:cover;flex:none;box-shadow:var(--sh);cursor:pointer}
+.rn{width:58px;height:87px;flex:none;border-radius:12px;background:var(--glass);font-size:10px;padding:4px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer}
+
+dialog{overflow-x:hidden;overflow-y:auto;overflow-wrap:anywhere}
+dialog span,dialog b,dialog small{min-width:0;overflow-wrap:anywhere}
+
+:root[data-theme="dark"]{--bg1:#0a0a12;--bg2:#1b1025;--glass:rgba(60,60,78,.45);--glass2:rgba(44,44,60,.78);--fg:#f2f2f7;--mut:#a4a4b6;--bd:rgba(255,255,255,.14);--sh:0 10px 30px rgba(0,0,0,.45)}
+:root[data-theme="light"]{--bg1:#e8ecf7;--bg2:#f8e8ee;--glass:rgba(255,255,255,.5);--glass2:rgba(255,255,255,.72);--fg:#111118;--mut:#65657a;--bd:rgba(255,255,255,.75);--sh:0 10px 30px rgba(30,30,60,.14)}
+.c.col{border:1.5px solid transparent;background:linear-gradient(var(--glass),var(--glass)) padding-box,linear-gradient(135deg,#f5d67a,#c9a227,#fff3b0,#b8860b) border-box;box-shadow:0 0 0 1px rgba(201,162,39,.35),var(--sh)}
+
+.zc{cursor:zoom-in}
+
+#sg{position:absolute;top:100%;left:12px;right:12px;z-index:20}
+.sgb{background:var(--glass2);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border:1px solid var(--bd);border-radius:18px;padding:6px;box-shadow:var(--sh)}
+.sgi{padding:10px 12px;border-radius:12px;cursor:pointer}.sgi:hover,.sgi:active{background:var(--glass)}
+
+dialog.zoom{width:auto!important;max-width:100vw!important;height:auto!important;max-height:100vh!important;padding:0!important;margin:auto;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;overflow:visible!important;animation:none!important}
+dialog.zoom::backdrop{background:rgba(0,0,0,.9);animation:none}
+dialog.zoom img{display:block;width:auto;height:auto;max-width:96vw;max-height:94vh;object-fit:contain;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+
+.c{overflow:visible;transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 var(--dy,10px) 30px rgba(0,0,0,.14)}
+.c:hover{transform:translateY(-2px)}
+.c::before{content:'';position:absolute;inset:0;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.22),transparent 42%);pointer-events:none;z-index:1}
+.c img{border-radius:20px 20px 0 0}
+.c .t{font-weight:600}
+.c .t small{font-variant-caps:all-small-caps;letter-spacing:.06em;font-size:12px}
+.c img{background:repeating-linear-gradient(90deg,#0003 0 6px,#fff2 6px 10px,#0003 10px 16px),#7775;background-size:16px 100%,auto;animation:strip 1s linear infinite}
+@keyframes strip{to{background-position:16px 0,0 0}}
+.swap{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}}
+.c.col{background-size:auto,300% 300%;animation:gold 5s ease-in-out infinite}
+@keyframes gold{0%,100%{background-position:0 0,0% 50%}50%{background-position:0 0,100% 50%}}
+.empty{text-align:center;padding:50px 20px;color:var(--mut);grid-column:1/-1}
+.empty b{display:block;color:var(--fg);font-size:18px;margin:8px 0 4px}
+@media (max-width:600px){.row{flex-direction:column;align-items:center}.row>img{width:150px}.row>div{width:100%;min-width:0}}
+:root[data-theme="cinema"]{--bg1:#000;--bg2:#06060a;--glass:rgba(22,22,28,.7);--glass2:rgba(12,12,16,.92);--fg:#f4f1ea;--mut:#8a8a94;--bd:rgba(255,255,255,.08);--sh:0 0 26px rgba(255,190,110,.22)}
+:root[data-theme="cinema"] .c{box-shadow:0 0 24px rgba(255,190,110,.2)}
+.chip{padding:5px 11px;font-size:13px;border-radius:999px}
+.ghdr{grid-column:1/-1;font-weight:700;font-size:17px;padding:14px 4px 0}
+
+dialog.zoom{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100vw!important;height:100vh!important;max-width:100vw!important;max-height:100vh!important;margin:0!important}
+dialog.zoom img{margin:0 auto!important}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip2{display:inline-flex;flex-direction:column;padding:7px 12px;border-radius:14px;background:var(--glass);border:1px solid var(--bd);color:var(--fg);font-size:13px;line-height:1.25;text-decoration:none}
+.chip2 small{color:var(--mut);font-size:11px}
+.sec{background:var(--glass);border:1px solid var(--bd);border-radius:18px;padding:12px 14px;margin:12px 0}
+.sec h3{margin:0 0 8px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+a:focus,button:focus,.chip2:focus{outline:none}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.kpi{background:var(--glass);border:1px solid var(--bd);border-radius:16px;padding:12px;text-align:center}
+.kpi b{display:block;font-size:22px}.kpi small{color:var(--mut);font-size:12px}
+.split{display:flex;height:24px;border-radius:99px;overflow:hidden;margin:10px 0 6px;font-size:12px;font-weight:600;color:#fff;line-height:24px;text-align:center;white-space:nowrap}
+.split>div{overflow:hidden;min-width:0}
+.s4{background:linear-gradient(90deg,#ff7065,var(--ac))}.sb{background:#3b82f6}.sd{background:#8e8e9a}
+.sbr{margin:8px 0}.sbl{display:flex;justify-content:space-between;gap:10px}.sbl span{overflow-wrap:anywhere;min-width:0}
+.sbt{height:8px;border-radius:99px;background:var(--bd);margin:4px 0 0;overflow:hidden}
+.sbt div{height:100%;border-radius:99px;background:linear-gradient(90deg,#ff7065,var(--ac))}
+.ic{width:17px;height:17px;flex:none}
+button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+:root{--r-lg:22px;--r-md:16px;--r-sm:12px}
+.c{border-radius:var(--r-lg)}
+.c img{border-radius:var(--r-lg) var(--r-lg) 0 0}
+.box,.sec,.kpi{border-radius:var(--r-md)}
+.abar{position:sticky;bottom:-22px;margin:14px -22px -22px;padding:12px 22px calc(14px + env(safe-area-inset-bottom,0px));background:var(--glass2);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-top:1px solid var(--bd);z-index:2}
+.ttl{font-size:26px;font-weight:700;letter-spacing:-.4px;line-height:1.15}
+.meta{font-size:12px;color:var(--mut);font-variant-caps:all-small-caps;letter-spacing:.07em;margin-top:5px}
+.row>img{animation:none}
+dialog a:not(.chip2){color:var(--fg);text-decoration:underline;text-decoration-color:var(--bd)}
+*{scrollbar-width:thin}
+.tap{cursor:pointer}
+.sbr.tap:active{opacity:.6}
+.split>div.tap{cursor:pointer}
+.pc{flex-direction:row;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px}
+.pc>span{display:flex;flex-direction:column;min-width:0}
+.av{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--bd)}
+.ini{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--mut);background:var(--glass)}
+.more{margin-top:10px;font-size:13px;color:var(--mut)}
+</style></head><body>
+<header>
+<h1>🎬 Filme <span class="mut" id="n"></span></h1>
+<input id="q" placeholder="Suchen…" autocomplete="off" oninput="draw();sugg()" onblur="setTimeout(sgClose,200)"><div id="sg"></div>
+<button id="t1" class="p" onclick="setTab('films')">Sammlung</button><button id="t2" onclick="setTab('wish')">Wunschliste</button><button onclick="quick()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h3l2.7 12.4a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 7H6"/></svg>Schnellcheck</button><button id="bth" onclick="cycleTheme()">Auto</button><button id="bvw" onclick="toggleView()" aria-label="Ansicht"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button><button id="bns" onclick="noSeen=!noSeen;this.className=noSeen?'p':'';draw()">Ungesehen</button><button onclick="loans()" aria-label="Verliehen"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg></button><button onclick="roulette()" aria-label="Zufallsfilm"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="16" cy="16" r="1.2"/></svg></button><button onclick="stats()" aria-label="Statistik"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button><button id="bnb" onclick="noE=!noE;this.className=noE?'p':'';draw()">Ohne Barcode</button><button id="bad" onclick="advSearch()">Erweitert</button>
+<select id="ff" onchange="draw()"></select>
+<button id="bchk" onclick="chk=!chk;this.className=chk?'p':'';draw()">⚠ Prüfen</button>
+<select id="fr" onchange="draw()"><option value="">Alle Reihen</option></select>
+<select id="so" onchange="draw()"><option value="t">A–Z</option><option value="y">Jahr</option><option value="a">Zuletzt hinzugefügt</option><option value="r">Filmreihe</option><option value="i">IMDb-Wertung</option><option value="g">Genre</option><option value="l">Nach Lagerort gruppiert</option></select>
+<button class="p" id="addb" onclick="openAdd()"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Hinzufügen</button>
+<button onclick="openSet()" aria-label="Einstellungen"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+<div id="recent"></div><div id="fbadge"></div><div id="grid"></div>
+<dialog id="dlg"></dialog>
+
+<script>
+const FORMATS=['Nicht angegeben','DVD','Blu-ray','4K UHD','VHS','HD DVD','LaserDisc','Sonstiges'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const IMG='https://image.tmdb.org/t/p/';
+let films=JSON.parse(localStorage.getItem('films')||'[]');
+let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
+let wish=JSON.parse(localStorage.getItem('wish')||'[]');
+let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
+const allFormats=()=>cfg.formats||FORMATS;
+const save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
+const wiki=n=>`https://de.wikipedia.org/w/index.php?search=${encodeURIComponent(n)}&go=Go`;
+
+async function tmdb(path,p={}){
+  if(!cfg.tmdb){openSet();throw new Error('TMDB-Schlüssel fehlt')}
+  const u=new URL('https://api.themoviedb.org/3'+path);
+  u.searchParams.set('language','de-DE');Object.entries(p).forEach(([k,v])=>u.searchParams.set(k,v));
+  const key=cfg.tmdb.trim(),h={};
+  if(key.length>40)h.Authorization='Bearer '+key;else u.searchParams.set('api_key',key);
+  const r=await fetch(u,{headers:h});if(!r.ok)throw new Error('TMDB Fehler '+r.status);return r.json();
+}
+let chk=false;
+const nz=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function sim(a,b){const A=new Set(nz(a).split(' ')),B=new Set(nz(b).split(' '));let i=0;A.forEach(x=>B.has(x)&&i++);return i/(A.size+B.size-i)}
+function mism(f){return !!f.title0&&!f.d.unmatched&&Math.max(sim(f.title0,f.d.title),sim(f.title0,f.d.orig||''))<0.67}
+function dupSet(){const m={};films.forEach(f=>{if(f.tmdbId)m[f.tmdbId]=(m[f.tmdbId]||0)+1});return m}
+const cl=s=>s.replace(/\s*\(\d{4}\)\s*/g,' ').replace(/[–:&’'.]/g,' ').replace(/\s+/g,' ').trim();
+async function bestMatch(t){
+ const q=cl(t),key=nz(q);
+ const r=(await tmdb('/search/movie',{query:q})).results||[];
+ const ex=r.filter(x=>nz(x.title)===key||nz(x.original_title||'')===key);
+ if(!ex.length)return null;
+ ex.sort((a,b)=>(b.popularity||0)-(a.popularity||0));
+ return ex[0].id;
+}
+const serOf=f=>f.series||f.d.collection||'';
+function fskOf(d){const de=(d.release_dates?.results||[]).find(r=>r.iso_3166_1==='DE');const c=(de?.release_dates||[]).map(x=>x.certification).find(x=>x);return c?(c.replace(/\D/g,'')||c):''}
+function colOf(d){return(d.belongs_to_collection?.name||'').replace(/\s*[-–(]?\s*(Filmreihe|Collection|Kollektion|Saga|Reihe|Filmsammlung)\)?$/i,'').trim()}
+async function fetchDetails(id){
+  const d=await tmdb('/movie/'+id,{append_to_response:'credits,videos,external_ids,release_dates',include_video_language:'de,en,null'});
+  const vids=(d.videos?.results||[]).filter(v=>v.site==='YouTube'&&v.type==='Trailer').sort((a,b)=>(b.iso_639_1==='de')-(a.iso_639_1==='de'));
+  const det={title:d.title,orig:d.original_title,year:(d.release_date||'').slice(0,4),poster:d.poster_path,
+    overview:d.overview,tagline:d.tagline,runtime:d.runtime,genres:(d.genres||[]).map(g=>g.name),
+    countries:(d.production_countries||[]).map(c=>c.name),
+    directors:(d.credits?.crew||[]).filter(c=>c.job==='Director').map(c=>c.name),dirs:(d.credits?.crew||[]).filter(c=>c.job==='Director').map(c=>({n:c.name,p:c.profile_path})),
+    cast:(d.credits?.cast||[]).slice(0,14).map(c=>({n:c.name,r:c.character,p:c.profile_path})),
+    imdbId:d.external_ids?.imdb_id||d.imdb_id,tmdbRating:d.vote_average?+d.vote_average.toFixed(1):null,trailer:vids[0]?.key||null,fsk:fskOf(d),collection:colOf(d),studio:(d.production_companies||[]).slice(0,2).map(c=>c.name).join(', '),spoken:(d.spoken_languages||[]).map(l=>l.english_name||l.name).join(', '),kinostart:d.release_date||'',reviews:d.reviews_count||0};
+  if(cfg.omdb&&det.imdbId){try{const o=await (await fetch(`https://www.omdbapi.com/?i=${det.imdbId}&apikey=${cfg.omdb.trim()}`)).json();if(o.imdbRating&&o.imdbRating!=='N/A')det.imdb=o.imdbRating}catch(e){}}
+  return det;
+}
+
+
+function advOk(f){const a=adv;if(!Object.keys(a).length)return true;
+ const has=(v,s)=>!s||String(v||'').toLowerCase().includes(s.toLowerCase());
+ if(a.fm&&f.format!==a.fm)return false;
+ if(a.fmq&&!new RegExp(a.fmq,'i').test(f.format||''))return false;
+ if(a.studio&&!String(f.d.studio||'').toLowerCase().includes(a.studio.toLowerCase()))return false;
+ if(a.fsk&&String(f.fsk||f.d.fsk||'')!==a.fsk)return false;
+ if(!has(f.langs,a.lang)||!has(f.subs,a.subs)||!has(f.loc,a.loc))return false;
+ if(!has((f.d.countries||[]).join(' '),a.country)||!has((f.d.genres||[]).join(' '),a.genre))return false;
+ if(a.dec&&String(Math.floor((+f.d.year||0)/10)*10)!==String(a.dec).slice(0,3)+'0')return false;
+ if(!has(f.box,a.box))return false;
+ if(!has([...(f.d.directors||[]),...(f.d.cast||[]).map(c=>c.n)].join(' '),a.person))return false;
+ return true}
+function advSearch(){const v=k=>adv[k]||'';
+ $('#dlg').innerHTML=`<h2>Erweiterte Suche</h2>
+ <label>Format</label><select id="a_fm"><option value="">Alle</option>${allFormats().map(x=>`<option ${v('fm')===x?'selected':''}>${esc(x)}</option>`).join('')}</select>
+ <label>FSK</label><select id="a_fk"><option value="">Alle</option>${['0','6','12','16','18'].map(x=>`<option ${v('fsk')===x?'selected':''}>${x}</option>`).join('')}</select>
+ <label>Sprache enthält</label><input id="a_la" value="${esc(v('lang'))}">
+ <label>Untertitel enthält</label><input id="a_su" value="${esc(v('subs'))}">
+ <label>Lagerort enthält</label><input id="a_lo" value="${esc(v('loc'))}">
+ <label>Land enthält</label><input id="a_co" value="${esc(v('country'))}">
+ <label>Genre enthält</label><input id="a_ge" value="${esc(v('genre'))}">
+ <label>Jahrzehnt (z. B. 1990)</label><input id="a_de" value="${esc(v('dec'))}">
+ <label>Box enthält</label><input id="a_bx" value="${esc(v('box'))}">
+ <label>Regie oder Darsteller enthält</label><input id="a_pe" value="${esc(v('person'))}">
+ <div class="bar"><button onclick="adv={};$('#bad').className='';$('#dlg').close();draw()">Zurücksetzen</button><button onclick="$('#dlg').close()">Abbrechen</button><button class="p" onclick="advApply()">Anwenden</button></div>`;
+ if(!$('#dlg').open)$('#dlg').showModal()}
+function advApply(){const g=s=>$(s).value.trim();adv={};
+ [['fm','#a_fm'],['fsk','#a_fk'],['lang','#a_la'],['subs','#a_su'],['loc','#a_lo'],['country','#a_co'],['genre','#a_ge'],['dec','#a_de'],['person','#a_pe'],['box','#a_bx']].forEach(([k,s])=>{if(g(s))adv[k]=g(s)});
+ $('#dlg').close();$('#bad').className=Object.keys(adv).length?'p':'';draw()}
+
+function fmtEditor(){return `<label>Formate (eigene hinzufügen oder entfernen)</label><div class="bar">${allFormats().map((x,i)=>`<span class="f2">${esc(x)} <a href="#" onclick="fmtDel(${i});return false">✕</a></span>`).join('')}</div><div style="display:flex;gap:8px"><input id="nf" style="flex:1" placeholder="z. B. 3D Blu-ray"><button onclick="fmtAdd()">Hinzufügen</button></div>`}
+function fmtAdd(){const v=$('#nf').value.trim();if(!v)return;cfg.formats=[...allFormats()];if(!cfg.formats.includes(v))cfg.formats.push(v);save();openSet()}
+function fmtDel(i){cfg.formats=[...allFormats()];cfg.formats.splice(i,1);save();openSet()}
+function scanInto(){onCode=c=>{stopScan();const e=$('#ea');if(e)e.value=c;$('#scanbox').innerHTML='';onCode=null};$('#scanbox').innerHTML='';scan()}
+
+
+function tintFrom(img,dl){try{const c=document.createElement('canvas');c.width=8;c.height=12;const x=c.getContext('2d');x.drawImage(img,0,0,8,12);
+ const d=x.getImageData(0,0,8,12).data;let r=0,g=0,b=0,n=0;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];n++}
+ dl.style.setProperty('--tint','rgba('+(r/n|0)+','+(g/n|0)+','+(b/n|0)+',.45)')}catch(e){}}
+function badgesOf(f){const t=[f.edition,f.notes,f.format].filter(Boolean).join(' ');const out=[];
+ if(/uncut/i.test(t))out.push('Uncut');if(/mediabook/i.test(t))out.push('Mediabook');if(/steelbook/i.test(t))out.push('Steelbook');if(f.box)out.push('Box');if(f.lentTo)out.push('Verliehen');return out}
+function listItem(f){const p=f.cover||(f.d.poster?IMG+'w92'+f.d.poster:'');
+ return `<div class="li" onclick="openDetail('${f.id}')">${p?`<img loading="lazy" src="${p}">`:`<div class="np">${esc(f.d.title)}</div>`}<div style="flex:1;min-width:0"><b>${esc(f.d.title)}</b><br><small class="mut">${esc(f.d.year)} · ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.seen?' · ✓ gesehen':''}</small></div></div>`}
+function toggleView(){view=view==='list'?'grid':'list';localStorage.setItem('view',view);draw();const g=$('#grid');g.classList.remove('swap');void g.offsetWidth;g.classList.add('swap')}
+function renderRecent(){const el=$('#recent');if(!el)return;
+ const ids=(cfg.recent||[]).filter(id=>films.some(f=>f.id===id));
+ el.innerHTML=(tab==='films'&&ids.length)?`<div class="rl"><small class="mut">Zuletzt angesehen</small><div class="rs">${ids.map(id=>{const f=films.find(x=>x.id===id);const p=f.cover||(f.d.poster?IMG+'w92'+f.d.poster:'');
+  return p?`<img title="${esc(f.d.title)}" onclick="openDetail('${id}')" src="${p}">`:`<div class="rn" onclick="openDetail('${id}')">${esc(f.d.title)}</div>`}).join('')}</div></div>`:''}
+function dupWarn(id){if(id||!draft.tmdbId)return'';const dup=films.filter(x=>x.tmdbId===draft.tmdbId);
+ return dup.length?`<div class="box" style="border-color:var(--ac)"><b>⚠ Diesen Film hast du schon</b><br>${dup.map(x=>esc([x.format,x.edition].filter(Boolean).join(' – '))).join('<br>')}<br><small class="mut">Trotzdem hinzufügen, wenn es eine zweite Version ist.</small></div>`:''}
+function toggleSeen(id){const f=films.find(x=>x.id===id);f.seen=!f.seen;save();draw();openDetail(id)}
+function markSeen(id){films.find(x=>x.id===id).seen=true;save();draw();rollDice()}
+function roulette(){$('#dlg').innerHTML=`<h2>Was schauen wir heute?</h2><p class="mut">Würfelt aus deinen ungesehenen Filmen.</p>
+ <label>Genre enthält (optional)</label><input id="rg">
+ <label>Maximale Laufzeit in Minuten (optional)</label><input id="rm" type="number" inputmode="numeric">
+ <div class="bar"><button onclick="$('#dlg').close()">Abbrechen</button><button class="p" onclick="rollDice()">🎲 Würfeln</button></div><div id="rr"></div>`;
+ if(!$('#dlg').open)$('#dlg').showModal()}
+function rollDice(){const g=($('#rg').value||'').trim().toLowerCase(),m=+$('#rm').value||0;
+ const c=films.filter(f=>!f.seen&&(!g||(f.d.genres||[]).join(' ').toLowerCase().includes(g))&&(!m||(f.d.runtime&&f.d.runtime<=m)));
+ if(!c.length){$('#rr').innerHTML='<p class="mut">Keine passenden ungesehenen Filme gefunden.</p>';return}
+ const f=c[Math.floor(Math.random()*c.length)];const p=f.cover||(f.d.poster?IMG+'w342'+f.d.poster:'');
+ $('#rr').innerHTML=`<div class="box" style="display:flex;gap:14px;align-items:center">${p?`<img src="${p}" style="width:90px;border-radius:12px">`:''}<div><b>${esc(f.d.title)}</b> <span class="mut">(${esc(f.d.year)})</span><br><small class="mut">${esc(f.format)}${f.d.runtime?' · '+f.d.runtime+' Min':''}</small></div></div>
+ <div class="bar"><button onclick="rollDice()">Nochmal</button><button onclick="openDetail('${f.id}')">Öffnen</button><button class="p" onclick="markSeen('${f.id}')">Gesehen ✓</button></div>`}
+function stats(){
+ const cnt=a=>{const m={};a.forEach(x=>{if(x)m[x]=(m[x]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+ const row=(k,v,m,key,val)=>`<div class="sbr tap" data-k="${key}" data-v="${esc(val)}" data-t="${esc(k)}" onclick="sf(this.dataset.k,this.dataset.v,this.dataset.t)"><div class="sbl"><span>${esc(k)}</span><b>${v}</b></div><div class="sbt"><div style="width:${v/m*100}%"></div></div></div>`;
+ const bars=(list,top,key,valFn)=>{const L=top?list.slice(0,top):list;const m=Math.max(1,...L.map(x=>x[1]));
+  return L.map(([k,v])=>row(k,v,m,key,valFn?valFn(k):k)).join('')||'<p class="mut">–</p>'};
+ const seg=(n,key,val,label,cls)=>`<div style="flex:${n||0.001}" class="${cls} tap" data-k="${key}" data-v="${val}" data-t="${label}" onclick="sf(this.dataset.k,this.dataset.v,this.dataset.t)">${n?label+' '+n:''}</div>`;
+ const pct=(x,y)=>y?Math.round(x/y*100):0;
+ const k4=films.filter(f=>/4k/i.test(f.format)).length;
+ const bd=films.filter(f=>/blu-?ray/i.test(f.format)).length;
+ const dv=films.filter(f=>/dvd/i.test(f.format)).length;
+ const unset=films.filter(f=>!f.format||f.format==='Nicht angegeben').length;
+ const hrs=Math.round(films.reduce((s,f)=>s+(+f.d.runtime||0),0)/60);
+ const years=films.map(f=>+f.d.year).filter(Boolean).sort((a,b)=>a-b);
+ const rated=films.map(f=>+(f.d.imdb||f.d.tmdbRating)).filter(Boolean);
+ const avg=rated.length?(rated.reduce((a,b)=>a+b,0)/rated.length).toFixed(1):'–';
+ const dec=cnt(films.map(f=>(+f.d.year>0)?Math.floor(+f.d.year/10)*10+'er':'')).sort((a,b)=>a[0]<b[0]?-1:1);
+ const genres=cnt(films.flatMap(f=>f.d.genres||[]));
+ const countries=cnt(films.flatMap(f=>f.d.countries||[]));
+ const studios=cnt(films.map(f=>f.d.studio?f.d.studio.split(',')[0].trim():''));
+ const fsk=cnt(films.map(f=>String(f.fsk||f.d.fsk||'')));
+ const loc=cnt(films.map(f=>f.loc||''));
+ const boxes=new Set(films.map(f=>f.box).filter(Boolean)).size;
+ const lent=films.filter(f=>f.lentTo).length;
+ const seen=films.filter(f=>f.seen).length;
+ $('#dlg').innerHTML=`<h2>Statistik</h2>
+ <p class="mut">${films.length} Filme · ${seen} gesehen · ${wish.length} auf der Wunschliste · ${boxes} Boxen · ${lent} verliehen</p>
+ <div class="kp">
+  <div class="kpi"><b>${hrs}</b><small>Stunden Laufzeit</small></div>
+  <div class="kpi"><b>${avg}</b><small>Ø Wertung</small></div>
+  <div class="kpi"><b>${years[0]||'–'}</b><small>Ältester Film</small></div>
+  <div class="kpi"><b>${years[years.length-1]||'–'}</b><small>Neuester Film</small></div>
+ </div>
+ <div class="box"><b>4K UHD · Blu-ray · DVD</b>
+  <div class="split">${seg(k4,'fmq','4k','4K UHD','s4')}${seg(bd,'fmq','blu-?ray','Blu-ray','sb')}${seg(dv,'fmq','dvd','DVD','sd')}</div>
+  <small class="mut">${pct(k4,films.length)}% 4K · ${pct(bd,films.length)}% Blu-ray · ${pct(dv,films.length)}% DVD · ${unset} ohne Formatangabe</small></div>
+ <div class="box"><b>Formate</b>${bars(cnt(films.map(f=>f.format)),0,'fm')}</div>
+ <div class="box"><b>Jahrzehnte</b>${bars(dec,0,'dec',k=>k.slice(0,4))}</div>
+ <div class="box"><b>Genres (Top 8)</b>${bars(genres,8,'genre')}</div>
+ <div class="box"><b>Herkunftsländer (Top 6)</b>${bars(countries,6,'country')}</div>
+ <div class="box"><b>Häufigste Regisseure (Top 6)</b>${bars(cnt(films.flatMap(f=>f.d.directors||[])),6,'person')}</div>
+ <div class="box"><b>Häufigste Darsteller (Top 6)</b>${bars(cnt(films.flatMap(f=>(f.d.cast||[]).slice(0,8).map(c=>c.n))),6,'person')}</div>
+ <div class="box"><b>Studios (Top 6)</b>${bars(studios,6,'studio')}</div>
+ <div class="box"><b>FSK</b>${bars(fsk.filter(x=>x[0]),0,'fsk')}</div>
+ <div class="box"><b>Lagerorte</b>${bars(loc.filter(x=>x[0]),0,'loc')}</div>
+ <div class="bar"><button class="p" onclick="$('#dlg').close()">Schließen</button></div>`;
+ if(!$('#dlg').open)$('#dlg').showModal()}
+function sf(key,val,label){adv={[key]:String(val),_t:String(label)};$('#dlg').close();$('#bad').className='p';draw()}
+function clearAdv(){adv={};$('#bad').className='';draw()}
+function fbadge(){const el=$('#fbadge');if(!el)return;
+ el.innerHTML=(tab==='films'&&Object.keys(adv).length)?`<div class="rl"><button class="chip" onclick="clearAdv()">Filter: ${esc(adv._t||Object.values(adv)[0])} ✕</button></div>`:''}
+// Swipe between Sammlung and Wunschliste
+let tx=0,ty=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+document.addEventListener('touchend',e=>{if($('#dlg').open)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+ if(Math.abs(dx)>90&&Math.abs(dy)<60){if(dx<0&&tab==='films')setTab('wish');if(dx>0&&tab==='wish')setTab('films')}},{passive:true});
+// Every new dialog content starts at the top
+new MutationObserver(()=>{$('#dlg').scrollTop=0}).observe($('#dlg'),{childList:true});
+// Tap next to a dialog closes it
+$('#dlg').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+
+function applyTheme(){const t=cfg.theme||'auto';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
+ const b=$('#bth');if(b)b.textContent={auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Kino'}[t]}
+function cycleTheme(){const o=['auto','dark','light','cinema'];cfg.theme=o[(o.indexOf(cfg.theme||'auto')+1)%4];save();applyTheme()}
+function openMusic(t){window.open('https://music.amazon.de/search/'+encodeURIComponent(t+' main theme soundtrack'),'_blank')}
+function zoomCover(src){if(!src)return;const z=document.createElement('dialog');z.className='zoom';
+ z.innerHTML='<img src="'+src+'" alt="">';
+ z.addEventListener('click',()=>z.close());z.addEventListener('close',()=>z.remove());
+ document.body.appendChild(z);z.showModal()}
+function sugg(){const q=nz($('#q').value);const el=$('#sg');if(q.length<2){el.innerHTML='';return}
+ const fs=films.filter(f=>nz(f.d.title).includes(q)||nz(f.title0).includes(q)).slice(0,5);
+ const ps=[...new Set(films.flatMap(f=>[...(f.d.directors||[]),...(f.d.cast||[]).map(c=>c.n)]))].filter(n=>nz(n).includes(q)).slice(0,4);
+ el.innerHTML=(fs.length||ps.length)?`<div class="sgb">${fs.map(f=>`<div class="sgi" onclick="sgClose();openDetail('${f.id}')"><b>${esc(f.d.title)}</b> <small class="mut">${esc(f.d.year)} · ${esc(f.format)}</small></div>`).join('')}${ps.map(n=>`<div class="sgi" data-n="${esc(n)}" onclick="pickPerson(this.dataset.n)">👤 ${esc(n)}</div>`).join('')}</div>`:''}
+function pickPerson(n){$('#q').value=n;sgClose();draw()}
+function sgClose(){const e=$('#sg');if(e)e.innerHTML=''}
+function boxMembers(f){if(!f.box)return'';
+ const m=films.filter(x=>x.box===f.box&&x.id!==f.id);
+ return `<div class="box"><b>Teil der Box „${esc(f.box)}“</b>${m.length?'<br>'+m.map(x=>`<a href="#" onclick="openDetail('${x.id}');return false">${esc(x.d.title)} (${esc(x.d.year)})</a>`).join(' · '):'<br><small class="mut">Keine weiteren Filme aus dieser Box in der Sammlung.</small>'}</div>`}
+const ACCENTS={'Rot':'#e0463b','Blau':'#3b82f6','Gold':'#c9a227','Grün':'#1e8e3e','Violett':'#8b5cf6'};
+function applyAccent(){document.documentElement.style.setProperty('--ac',cfg.accent||'#e0463b')}
+function setAccent(c){cfg.accent=c;save();applyAccent();openSet()}
+function accentEditor(){return `<label>Akzentfarbe</label><div class="bar">${Object.entries(ACCENTS).map(([n,c])=>`<button title="${n}" onclick="setAccent('${c}')" style="width:38px;height:38px;border-radius:50%;padding:0;background:${c};border:${(cfg.accent||'#e0463b')===c?'3px solid var(--fg)':'1px solid var(--bd)'}"></button>`).join('')}</div>`}
+function emptyHTML(){return films.length
+ ?'<div class="empty"><div style="font-size:48px">🔎</div><b>Keine Treffer</b><p class="mut">Passe Suche oder Filter an.</p></div>'
+ :'<div class="empty"><div style="font-size:48px">🎞️</div><b>Noch keine Filme</b><p class="mut">Tippe auf „＋ Film“, um deine Sammlung zu beginnen.</p></div>'}
+addEventListener('scroll',()=>document.documentElement.style.setProperty('--dy',(8+Math.min(scrollY,400)/400*8)+'px'),{passive:true});
+const LANGS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Original'];
+const SUBS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Keine'];
+const ASPECTS=['1.33:1','1.78:1','1.85:1','2.35:1','2.39:1'];
+const REGIONS=['A','B','C','2'];
+const DISKS=['1','2','3','4','5'];
+function chips(id,opts,multi){return '<div class="bar" style="margin-top:6px">'+opts.map(o=>`<button type="button" class="chip" onclick="pickChip('${id}',this.textContent,${multi})">${esc(o)}</button>`).join('')+'</div>'}
+function pickChip(id,v,multi){const el=$('#'+id);if(!multi){el.value=v;return}
+ const parts=el.value.split(',').map(s=>s.trim()).filter(Boolean);if(!parts.includes(v))parts.push(v);el.value=parts.join(', ')}
+function hintFrom(t){const s=t||'';let format='';
+ if(/4k|uhd/i.test(s))format='4K UHD';else if(/blu-?ray/i.test(s))format='Blu-ray';else if(/\bdvd\b/i.test(s))format='DVD';
+ const ed=[];if(/steelbook/i.test(s))ed.push('Steelbook');if(/mediabook/i.test(s))ed.push('Mediabook');if(/uncut/i.test(s))ed.push('Uncut');
+ if(/digibook/i.test(s))ed.push('Digibook');if(/limited|limitiert/i.test(s))ed.push('Limitiert');
+ return {format,edition:ed.join(' ')}}
+function groupLoc(l){const s=[...l].sort((a,b)=>(a.loc||'~').localeCompare(b.loc||'~','de')||a.d.title.localeCompare(b.d.title,'de'));
+ const out=[];let last=null;s.forEach(f=>{const k=f.loc||'Ohne Lagerort';if(k!==last){out.push({hdr:k});last=k}out.push(f)});return out}
+function loans(){const l=films.filter(f=>f.lentTo).sort((a,b)=>(a.lentSince||'')<(b.lentSince||'')?-1:1);
+ const fmt=s=>s?s.split('-').reverse().join('.'):'';
+ const days=s=>s?Math.floor((Date.now()-new Date(s).getTime())/864e5):0;
+ $('#dlg').innerHTML=`<h2>Verliehen</h2>${l.length?l.map(f=>`<div class="box" style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><div><b>${esc(f.d.title)}</b><br><small class="mut">${esc(f.format)}${f.edition?' · '+esc(f.edition):''}</small></div><div style="text-align:right">${esc(f.lentTo)}<br><small class="mut">seit ${fmt(f.lentSince)} (${days(f.lentSince)} Tage)</small><br><button onclick="returned('${f.id}')">Zurückbekommen</button></div></div>`).join(''):'<p class="mut">Gerade ist nichts verliehen.</p>'}<div class="bar"><button class="p" onclick="$('#dlg').close()">Schließen</button></div>`;
+ if(!$('#dlg').open)$('#dlg').showModal()}
+function returned(id){const f=films.find(x=>x.id===id);f.lentTo='';f.lentSince='';save();draw();loans()}
+let originRect=null;
+$('#grid').addEventListener('click',e=>{const c=e.target.closest('.c,.li');if(c){const im=c.querySelector('img');originRect=(im||c).getBoundingClientRect()}},true);
+function flyIn(dl){const r=originRect;originRect=null;const img=dl.querySelector('img.zc');if(!r||!img)return;
+ const t=img.getBoundingClientRect();if(!t.width)return;
+ img.animate([{transform:`translate(${r.left-t.left}px,${r.top-t.top}px) scale(${r.width/t.width})`,opacity:.7},{transform:'none',opacity:1}],{duration:420,easing:'cubic-bezier(.2,.9,.3,1)'})}
+function av(p,n){if(p)return `<img class="av" loading="lazy" src="https://image.tmdb.org/t/p/w185${p}" alt="">`;
+ const ini=(n||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<span class="av ini">${esc(ini)}</span>`}
+function castChip(c){return `<a class="chip2 pc" target="_blank" href="${wiki(c.n)}">${av(c.p,c.n)}<span><b>${esc(c.n)}</b>${c.r?`<small>${esc(c.r)}</small>`:''}</span></a>`}
+function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
+ ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
+ $('#addb').textContent=t==='films'?'Hinzufügen':'Wunsch hinzufügen';
+ $('#addb').setAttribute('onclick',t==='films'?'openAdd()':'openAddWish()');
+ draw()}
+function openAddWish(){openAdd();draft.target='wish'}
+function drawWish(){renderRecent();const l=[...wish].sort((a,b)=>a.title.localeCompare(b.title,'de'));
+ $('#n').textContent='('+l.length+')';
+ $('#grid').innerHTML=l.map(w=>`<div class="c" onclick="wishDetail('${w.id}')">${w.poster?`<img loading="lazy" src="${IMG}w342${w.poster}">`:`<div class="np">${esc(w.title)}</div>`}<span class="f" style="background:#1e8e3e">${esc(w.format||'Wunsch')}</span><div class="t">${esc(w.title)}<br><small>${esc(w.year||'')}</small></div></div>`).join('')||'<p class="mut" style="padding:20px">Noch keine Wünsche. Mit „＋ Wunsch“ hinzufügen.</p>'}
+function wishForm(w,id){const d=draft.d;
+ $('#dlg').innerHTML=`<h2>${esc(d.title)} <span class="mut">(${esc(d.year||'')})</span></h2>
+ <label>Gewünschtes Format / Edition (z. B. 4K UHD Steelbook)</label><input id="wf" value="${esc(w.format||'')}">
+ <label>Barcode / EAN (optional, für den Schnellcheck im Laden)</label><input id="we" value="${esc(w.ean||draft.ean||'')}">
+ <label>Notiz (z. B. Preis, Shop, limitiert)</label><textarea id="wn" rows="2">${esc(w.note||'')}</textarea>
+ <div class="bar"><button onclick="$('#dlg').close()">Abbrechen</button><button class="p" onclick="wishCommit('${id||''}')">Speichern</button></div>`}
+function wishCommit(id){const d=draft.d;
+ const o={format:$('#wf').value.trim(),ean:$('#we').value.trim(),note:$('#wn').value.trim(),title:d.title,year:d.year||'',tmdbId:draft.tmdbId,poster:d.poster||null};
+ if(id)Object.assign(wish.find(w=>w.id===id),o);else wish.push({id:crypto.randomUUID(),added:Date.now(),...o});
+ save();draw();$('#dlg').close()}
+function wishDetail(id){const w=wish.find(x=>x.id===id);
+ $('#dlg').innerHTML=`<div class="row">${w.poster?`<img src="${IMG}w500${w.poster}">`:''}<div><h2>${esc(w.title)} <span class="mut">(${esc(w.year||'')})</span></h2>
+ <div class="box"><b>Gewünscht</b><br>Format: ${esc(w.format||'–')}${w.ean?'<br>Code: '+esc(w.ean):''}${w.note?'<br>'+esc(w.note):''}</div></div></div>
+ <div class="bar"><button onclick="editWish('${id}')">Bearbeiten</button><button class="p" onclick="bought('${id}')">Gekauft → Sammlung</button><button onclick="delWish('${id}')">Löschen</button></div>`;
+ $('#dlg').showModal()}
+function editWish(id){const w=wish.find(x=>x.id===id);draft={d:{title:w.title,year:w.year,poster:w.poster},tmdbId:w.tmdbId,ean:w.ean};wishForm(w,id)}
+function delWish(id){if(confirm('Von der Wunschliste löschen?')){wish=wish.filter(w=>w.id!==id);save();draw();$('#dlg').close()}}
+async function bought(id){const w=wish.find(x=>x.id===id);let d=null;
+ if(w.tmdbId){try{d=await fetchDetails(w.tmdbId)}catch(e){}}
+ const known=allFormats().includes(w.format);
+ films.push({id:crypto.randomUUID(),tmdbId:w.tmdbId,d:d||{title:w.title,orig:'',year:w.year||'',poster:w.poster||null,overview:'',genres:[],countries:[],directors:[],cast:[]},added:Date.now(),format:known?w.format:'Sonstiges',edition:known?'':(w.format||''),ean:w.ean||'',notes:w.note||'',fsk:'',langs:'',subs:'',series:''});
+ wish=wish.filter(x=>x.id!==id);save();draw();$('#dlg').close()}
+
+function quick(){
+ $('#dlg').innerHTML=`<h2>Schnellcheck</h2><p class="mut">Barcode auf der Rückseite scannen oder Titel eintippen.</p>
+ <div class="bar"><button class="p" onclick="scanQuick()">📷 Barcode scannen</button></div>
+ <div id="scanbox"></div>
+ <div style="display:flex;gap:8px;margin-top:8px"><input id="qs" style="flex:1" placeholder="Titel" onkeydown="if(event.key==='Enter')checkTitle()"><button onclick="checkTitle()">Prüfen</button></div>
+ <div id="qr"></div>
+ <div class="bar"><button onclick="$('#dlg').close()">Schließen</button></div>`;
+ if(!$('#dlg').open)$('#dlg').showModal()}
+function scanQuick(){onCode=quickCode;$('#scanbox').innerHTML='';scan()}
+async function quickCode(code){stopScan();
+ const hit=films.some(f=>f.ean===code)||wish.some(w=>w.ean===code);
+ let t='';
+ $('#qr').innerHTML='<p class="mut">Prüfe '+esc(code)+'…</p>';
+ if(!hit){try{const r=await (await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code)).json();t=r.items?.[0]?.title||''}catch(e){}
+  t=t.replace(/\[.*?\]|\(.*?\)|blu-?ray|dvd|4k|uhd|steelbook|edition/gi,' ').replace(/\s+/g,' ').trim()}
+ $('#qs').value=t;
+ if(!t&&!hit){$('#qr').innerHTML='<p>Zu diesem Code wurde kein Titel gefunden. Bitte Titel eintippen und „Prüfen“ tippen.</p>';return}
+ showQuick(t,code)}
+function checkTitle(){const t=$('#qs').value.trim();if(!t)return;showQuick(t,'')}
+function showQuick(t,code){
+ lastQ={t,code};const k=nz(t);
+ const own=films.find(f=>(code&&f.ean===code)||(k&&[f.title0,f.d.title,f.d.orig].some(x=>nz(x)===k)));
+ const wh=wish.find(w=>(code&&w.ean===code)||(k&&nz(w.title)===k));
+ const card=(bg,head,sub,name)=>`<div style="background:${bg};color:#fff;border-radius:14px;padding:22px;text-align:center;margin-top:12px"><div style="font-size:26px;font-weight:700">${head}</div><div style="font-size:17px;margin-top:6px">${sub}</div><div style="opacity:.85;margin-top:6px">${esc(name)}</div></div>`;
+ if(own){const ed=[own.format,own.edition].filter(Boolean).join(' – ');
+  $('#qr').innerHTML=card('#c0392b','Hast du schon',esc('als '+ed),own.d.title)}
+ else if(wh){const lim=badgesOf({edition:wh.format,notes:wh.note}).length;$('#qr').innerHTML=card('#1e8e3e','Steht auf deiner Wunschliste',esc(wh.format?'Gewünscht: '+wh.format:'')+(lim?'<br><b>Limitiert – jetzt zugreifen!</b>':''),wh.title)}
+ else{$('#qr').innerHTML=card('#555','Noch nicht in deiner Sammlung','',t||code)+`<div class="bar"><button class="p" onclick="addWishFromQuick()">Zur Wunschliste hinzufügen</button></div>`}}
+function addWishFromQuick(){const {t,code}=lastQ;$('#dlg').close();openAdd(code||'');draft.target='wish';$('#s').value=t;search(t)}
+
+function draw(){
+  renderRecent();fbadge();if(tab==='wish'){drawWish();return}
+  const q=$('#q').value.toLowerCase(),ff=$('#ff').value,so=$('#so').value;
+  const fs=['Alle Formate',...new Set(films.map(f=>f.format))];
+  if(![...$('#ff').options].map(o=>o.text).every((t,i)=>t===fs[i])||$('#ff').options.length!==fs.length){$('#ff').innerHTML=fs.map(f=>`<option value="${f==='Alle Formate'?'':esc(f)}">${esc(f)}</option>`).join('');$('#ff').value=ff}
+  const dc=dupSet(),fr=$('#fr').value,sl=[...new Set(films.map(serOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de'));
+  if([...$('#fr').options].slice(1).map(o=>o.value).join('|')!==sl.join('|')){$('#fr').innerHTML='<option value="">Alle Reihen</option>'+sl.map(s=>`<option>${esc(s)}</option>`).join('');$('#fr').value=fr}
+  let l=films.filter(f=>(!ff||f.format===ff)&&(!fr||serOf(f)===fr)&&(!chk||mism(f)||f.d.unmatched||dc[f.tmdbId]>1)&&(!noE||!f.ean)&&(!noSeen||!f.seen)&&advOk(f)&&((f.title0||'')+' '+f.d.title+' '+f.d.orig+' '+f.d.directors.join(' ')+' '+f.d.cast.map(c=>c.n).join(' ')+' '+f.edition).toLowerCase().includes(q));
+  l.sort(so==='i'?(a,b)=>(+(b.d.imdb||b.d.tmdbRating||0))-(+(a.d.imdb||a.d.tmdbRating||0))||a.d.title.localeCompare(b.d.title,'de'):so==='g'?(a,b)=>((a.d.genres||[])[0]||'~').localeCompare((b.d.genres||[])[0]||'~','de')||a.d.title.localeCompare(b.d.title,'de'):so==='r'?(a,b)=>(serOf(a)||'~').localeCompare(serOf(b)||'~','de')||a.d.year-b.d.year:so==='y'?(a,b)=>a.d.year-b.d.year:so==='a'?(a,b)=>b.added-a.added:(a,b)=>a.d.title.localeCompare(b.d.title,'de'));
+  $('#n').textContent=`(${l.length}${l.length!==films.length?'/'+films.length:''})`;
+  $('#grid').className=view==='list'?'list':'';$('#grid').innerHTML=(so==='l'?groupLoc(l):l).map(f=>f.hdr?`<div class="ghdr">${esc(f.hdr)}</div>`:view==='list'?listItem(f):`<div class="c${badgesOf(f).some(b=>b==='Mediabook'||b==='Steelbook')?' col':''}" onclick="openDetail('${f.id}')">${f.cover||f.d.poster?`<img loading="lazy" src="${f.cover?f.cover:IMG+'w342'+f.d.poster}">`:`<div class="np">${esc(f.d.title)}</div>`}<span class="f">${esc(f.format)}${f.d.unmatched?' ⚠':''}</span>${badgesOf(f).map((b,i)=>`<span class="bd" style="top:${8+i*26}px">${b}</span>`).join('')}<div class="t">${esc(f.title0||f.d.title)}<br><small>${esc(f.d.year)}</small></div></div>`).join('')||emptyHTML();
+}
+
+function openDetail(id){
+  const f=films.find(x=>x.id===id),d=f.d,dl=$('#dlg');
+  cfg.recent=[id,...(cfg.recent||[]).filter(x=>x!==id)].slice(0,5);save();dl.style.removeProperty('--tint');
+  dl.innerHTML=`<div class="row">${d.poster||f.cover?`<img class="zc" crossorigin="anonymous" onclick="zoomCover(this.dataset.full)" data-full="${esc(f.cover||IMG+'original'+d.poster)}" onload="tintFrom(this,this.closest('dialog'))" src="${esc(f.cover||IMG+'w500'+d.poster)}">`:''}<div>
+  <div class="ttl">${esc(d.title)}</div><div class="meta">${esc(d.year)}${f.format?' · '+esc(f.format):''}${f.edition?' · '+esc(f.edition):''}</div>
+  ${d.orig&&d.orig!==d.title?`<div class="mut">Originaltitel: ${esc(d.orig)}</div>`:''}
+  ${f.title0&&mism(f)?`<div class="mut">⚠ Auf deiner Liste: ${esc(f.title0)}</div>`:''}${d.tagline?`<i class="mut">${esc(d.tagline)}</i>`:''}
+  <div class="box"><b>Meine Version</b><br>Format: ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.loc?'<br>Lagerort: '+esc(f.loc):''}${f.box?'<br>Box: '+esc(f.box):''}${f.lentTo?'<br>Verliehen an: '+esc(f.lentTo)+(f.lentSince?' seit '+f.lentSince.split('-').reverse().join('.'):''):''}${f.region?'<br>Region: '+esc(f.region):''}${f.aspect?'<br>Bildformat: '+esc(f.aspect):''}${f.disks?'<br>Anzahl Disks: '+esc(f.disks):''}${f.bonus?'<br>Bonusmaterial: '+esc(f.bonus):''}${f.seen?'<br>✓ Gesehen':''}${(f.fsk||d.fsk)?'<br>FSK: '+esc(f.fsk||d.fsk):''}${f.langs?'<br>Sprachen: '+esc(f.langs):''}${f.subs?'<br>Untertitel: '+esc(f.subs):''}${serOf(f)?'<br>Filmreihe: '+esc(serOf(f)):''}${f.ean?'<br>Code: '+esc(f.ean):''}${f.notes?'<br>'+esc(f.notes):''}</div>
+  <p>${d.runtime?d.runtime+' Min · ':''}${esc(d.genres.join(', '))}<br>Land: ${esc(d.countries.join(', ')||'–')}<br>Produktionsjahr: ${esc(d.year||'–')}<br>Studio: ${esc(d.studio||'–')}<br>Originalsprache: ${esc(d.spoken||'–')}<br>Kinostart: ${esc(d.kinostart||'–')}<br>
+  ⭐ IMDb: ${d.imdb?esc(d.imdb)+'/10':'–'}${d.imdbId?` (<a target="_blank" href="https://www.imdb.com/title/${d.imdbId}">IMDb</a>)`:''}${d.tmdbRating?` · TMDB: ${d.tmdbRating}`:''}</p>
+  </div></div>
+  <p>${esc(d.overview||'Keine Beschreibung.')}</p>
+  ${boxMembers(f)}
+  <div class="sec"><h3>Regie</h3><div class="chips">${(d.dirs||d.directors.map(n=>({n}))).map(x=>`<a class="chip2 pc" target="_blank" href="${wiki(x.n)}">${av(x.p,x.n)}<span><b>${esc(x.n)}</b></span></a>`).join('')||'<span class="mut">–</span>'}</div></div>
+  <div class="sec"><h3>Darsteller</h3><div class="chips">${(d.cast||[]).slice(0,6).map(castChip).join('')||'<span class="mut">–</span>'}</div>${(d.cast||[]).length>6?`<div class="chips rest" style="display:none;margin-top:8px">${d.cast.slice(6).map(castChip).join('')}</div><button class="more" onclick="this.previousElementSibling.style.display='flex';this.remove()">Alle ${d.cast.length} Darsteller anzeigen</button>`:''}</div>
+  <div class="sec"><h3>Kritiken</h3><a target="_blank" href="https://www.themoviedb.org/movie/${f.tmdbId||''}/reviews">auf TMDB ansehen</a></div>
+  ${d.trailer?`<iframe src="https://www.youtube-nocookie.com/embed/${d.trailer}" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><p><a target="_blank" href="https://www.youtube.com/watch?v=${d.trailer}">Trailer auf YouTube öffnen</a> (falls das Video oben nicht lädt)</p>`:'<p class="mut">Kein Trailer gefunden.</p>'}
+  ${d.unmatched?`<p>⚠ Noch nicht automatisch zugeordnet.</p><button class="p" onclick="relink('${id}')">Film zuordnen</button>`:''}<div class="bar abar"><button class="p" onclick="openEdit('${id}')">Bearbeiten</button><button onclick="refresh('${id}',this)">Infos aktualisieren</button><button data-t="${esc(d.title)}" onclick="openMusic(this.dataset.t)">Titelmusik</button><button onclick="toggleSeen('${id}')">${f.seen?'Als ungesehen markieren':'✓ Gesehen'}</button><button onclick="pickCover('${id}')">Cover wählen</button><button onclick="relink('${id}')">Anderen Film zuordnen</button><button onclick="del('${id}')">Löschen</button></div>`;
+  dl.showModal();flyIn(dl);
+}
+async function refresh(id,b){b.textContent='Lädt…';try{const f=films.find(x=>x.id===id);f.d=await fetchDetails(f.tmdbId);save();draw();openDetail(id)}catch(e){alert(e.message);b.textContent='Infos aktualisieren'}}
+function del(id){if(confirm('Film wirklich löschen?')){films=films.filter(f=>f.id!==id);save();draw();$('#dlg').close()}}
+
+let draft={};
+function openAdd(ean=''){onCode=null;
+  draft={ean};
+  $('#dlg').innerHTML=`<h2>Film hinzufügen</h2>
+  <div style="display:flex;gap:8px"><input id="s" style="flex:1" placeholder="Titel (optional Jahr: Alien 1979)" onkeydown="if(event.key==='Enter')search()"><button class="p" onclick="search()">Suchen</button></div>
+  <div class="bar"><button onclick="scan()">📷 Code scannen</button><span class="mut" style="align-self:center">EAN-Barcode oder QR-Code</span></div>
+  <div id="scanbox"></div><div id="res"></div>
+  <div class="bar"><button onclick="$('#dlg').close()">Abbrechen</button></div>`;
+  if(!$('#dlg').open)$('#dlg').showModal();$('#s').focus();
+}
+async function search(q){
+  q=q||$('#s').value.trim();if(!q)return;
+  const m=q.match(/^(.*?)\s+((?:19|20)\d\d)$/),p={query:m?m[1]:q};if(m)p.year=m[2];
+  $('#res').innerHTML='<p class="mut">Suche…</p>';
+  try{const r=(await tmdb('/search/movie',p)).results.slice(0,12);
+  $('#res').innerHTML=r.map(x=>`<div class="res" onclick="pick(${x.id})">${x.poster_path?`<img src="${IMG}w92${x.poster_path}">`:'<div style="width:46px"></div>'}<div><b>${esc(x.title)}</b> <span class="mut">(${(x.release_date||'').slice(0,4)})</span><br><small class="mut">${esc((x.overview||'').slice(0,110))}…</small></div></div>`).join('')||'<p class="mut">Nichts gefunden.</p>'}
+  catch(e){$('#res').innerHTML=`<p>${esc(e.message)}</p>`}
+}
+async function pick(tid){
+  $('#res').innerHTML='<p class="mut">Lade Details…</p>';
+  try{draft.tmdbId=tid;draft.d=await fetchDetails(tid);if(draft.relink){const f=films.find(x=>x.id===draft.relink);f.tmdbId=tid;f.d=draft.d;f.manual=true;save();draw();openDetail(f.id);return}draft.target==='wish'?wishForm({}):formStep({})}catch(e){alert(e.message)}
+}
+function formStep(f,id){
+  const d=draft.d;
+  $('#dlg').innerHTML=`<h2>${esc(d.title)} <span class="mut">(${esc(d.year)})</span></h2>${dupWarn(id)}
+  <label>Format</label><select id="fm">${allFormats().map(x=>`<option ${x===(f.format||draft.hint?.format||cfg.lastFormat)?'selected':''}>${x}</option>`).join('')}</select>
+  <label>Edition / Version (z. B. Steelbook, Director's Cut, Mediabook)</label><input id="ed" value="${esc(f.edition||draft.hint?.edition||'')}">
+  <label>Barcode / EAN</label><div style="display:flex;gap:8px"><input id="ea" style="flex:1" value="${esc(f.ean??draft.ean??'')}"><button onclick="scanInto()">📷 Scannen</button></div><div id="scanbox"></div>
+  <label>FSK (leer = automatisch${d.fsk?': '+d.fsk:''})</label><select id="fk"><option value="">Automatisch</option>${['0','6','12','16','18'].map(x=>`<option ${x===f.fsk?'selected':''}>${x}</option>`).join('')}</select>
+  <label>Sprachen auf der Disc (z. B. Deutsch, Englisch)</label><input id="la" value="${esc(f.langs||'')}">${chips('la',LANGS,true)}
+  <label>Untertitel (z. B. Deutsch, Englisch)</label><input id="su" value="${esc(f.subs||'')}">${chips('su',SUBS,true)}
+  <label>Filmreihe (leer = automatisch${d.collection?': '+esc(d.collection):''})</label><input id="se" list="sl" value="${esc(f.series||'')}"><datalist id="sl">${[...new Set(films.map(serOf).filter(Boolean))].map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
+  <label>Lagerort (z. B. Wohnzimmer Regal 2)</label><input id="lo" value="${esc(f.loc||'')}">
+  <label>Region (z. B. B)</label><input id="rg2" value="${esc(f.region||'')}">${chips('rg2',REGIONS,false)}
+  <label>Bildformat (z. B. 2.35:1)</label><input id="as" value="${esc(f.aspect||'')}">${chips('as',ASPECTS,false)}
+  <label>Anzahl Disks</label><input id="dk" value="${esc(f.disks||'')}">${chips('dk',DISKS,false)}
+  <label>Bonusmaterial</label><textarea id="bo" rows="2">${esc(f.bonus||'')}</textarea>
+  <label>Box (optional, z. B. Der Pate – Box)</label><input id="bx" list="bl" value="${esc(f.box||'')}"><datalist id="bl">${[...new Set(films.map(x=>x.box).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+  <label>Verliehen an (leer = nicht verliehen)</label><input id="lt" value="${esc(f.lentTo||'')}">
+  <label>Verliehen seit</label><input id="ls" type="date" value="${esc(f.lentSince||'')}">
+  <label>Notizen</label><textarea id="no" rows="2">${esc(f.notes||'')}</textarea>
+  <div class="bar"><button onclick="$('#dlg').close()">Abbrechen</button><button class="p" onclick="commit('${id||''}')">Speichern</button></div>`;
+}
+function commit(id){
+  const o={lentTo:$('#lt').value.trim(),lentSince:$('#lt').value.trim()?($('#ls').value||new Date().toISOString().slice(0,10)):'',box:$('#bx').value.trim(),region:$('#rg2').value.trim(),aspect:$('#as').value.trim(),disks:$('#dk').value.trim(),bonus:$('#bo').value.trim(),loc:$('#lo').value.trim(),fsk:$('#fk').value,langs:$('#la').value.trim(),subs:$('#su').value.trim(),series:$('#se').value.trim(),format:$('#fm').value,edition:$('#ed').value.trim(),ean:$('#ea').value.trim(),notes:$('#no').value.trim()};cfg.lastFormat=o.format;
+  if(id)Object.assign(films.find(f=>f.id===id),o);
+  else films.push({id:crypto.randomUUID(),tmdbId:draft.tmdbId,d:draft.d,added:Date.now(),...o});
+  save();draw();$('#dlg').close();
+}
+function pickCover(id){const i=document.createElement('input');i.type='file';i.accept='image/*';
+ i.onchange=async()=>{try{const f=films.find(x=>x.id===id),bmp=await createImageBitmap(i.files[0]);
+  const s=Math.min(1,400/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
+  c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+  f.cover=c.toDataURL('image/jpeg',0.85);save();draw();openDetail(id)}catch(e){alert('Bild konnte nicht gelesen werden')}};i.click()}
+function relink(id){const f=films.find(x=>x.id===id);openAdd();draft.relink=id;$('#s').value=f.title0||f.d.title}
+function openEdit(id){const f=films.find(x=>x.id===id);draft={d:f.d,tmdbId:f.tmdbId};formStep(f,id);}
+
+let stream,loop;
+async function scan(){
+  const box=$('#scanbox');
+  if(!('BarcodeDetector' in window)){box.innerHTML='<p>Dieser Browser kann keine Codes scannen. Bitte Chrome (Android/Desktop) nutzen, oder Titel eintippen.</p>';return}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}catch(e){box.innerHTML='<p>Kein Kamerazugriff.</p>';return}
+  box.innerHTML='<video id="v" autoplay playsinline muted></video>';const v=$('#v');v.srcObject=stream;
+  const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','qr_code']});
+  loop=setInterval(async()=>{try{const c=await det.detect(v);if(c.length){stopScan();(onCode||gotCode)(c[0].rawValue)}}catch(e){}},400);
+}
+function stopScan(){clearInterval(loop);stream?.getTracks().forEach(t=>t.stop())}
+$('#dlg').addEventListener('close',stopScan);
+async function gotCode(code){
+  draft.ean=code;$('#scanbox').innerHTML=`<p>Code erkannt: <b>${esc(code)}</b> – suche Produkt…</p>`;
+  if(/^https?:/.test(code)){$('#scanbox').innerHTML+='<p>QR-Code enthält einen Link; bitte Titel manuell suchen.</p>';return}
+  try{const r=await (await fetch('https://api.upcitemdb.com/prod/trial/lookup?upc='+code)).json();
+    const t=r.items?.[0]?.title;draft.hint=hintFrom(t||'');
+    if(t){const clean=t.replace(/\(.*?\)|\[.*?\]|blu-?ray|dvd|4k|uhd|steelbook|edition/gi,'').replace(/\s+/g,' ').trim();$('#s').value=clean;search(clean);return}}catch(e){}
+  $('#scanbox').innerHTML+='<p>Zu diesem Code wurde kein Titel gefunden – bitte Titel eintippen, der Code wird übernommen.</p>';
+}
+
+function openSet(){
+  $('#dlg').innerHTML=`<h2>Einstellungen</h2>
+  <label>TMDB API-Schlüssel (kostenlos auf themoviedb.org → Einstellungen → API) – nötig für Filminfos</label><input id="k1" value="${esc(cfg.tmdb||'')}">
+  <label>OMDb API-Schlüssel (kostenlos auf omdbapi.com) – optional, für die echte IMDb-Wertung</label><input id="k2" value="${esc(cfg.omdb||'')}">
+  ${fmtEditor()}${accentEditor()}<div class="bar"><button class="p" onclick="cfg.tmdb=$('#k1').value;cfg.omdb=$('#k2').value;save();$('#dlg').close()">Speichern</button>
+  <button onclick="exp()">Sammlung exportieren</button><button onclick="rematch()">Zuordnung korrigieren</button><button onclick="reloadAll()">Alle Filminfos neu laden</button><button onclick="$('#imp').click()">Importieren</button><input id="imp" type="file" accept=".json" hidden onchange="imp(this.files[0])"></div>
+  <p class="mut">Daten liegen lokal in diesem Browser. Mach regelmäßig einen Export als Backup.</p>${(!cfg.lastBackup||Date.now()-cfg.lastBackup>14*864e5)&&(films.length||wish.length)?'<p><b>⚠ Letzte Sicherung ist älter als 14 Tage oder fehlt. Bitte jetzt exportieren.</p>':''}`;
+  $('#dlg').showModal();
+}
+async function reloadAll(){if(!confirm('Alle Filminfos neu von TMDB laden (holt FSK und Filmreihen)? Dauert ein paar Minuten.'))return;
+ const q=films.filter(f=>f.tmdbId),tot=q.length;let n=0;$('#dlg').innerHTML='<h2>Aktualisiere…</h2><p id="pg"></p><p class="mut">Bitte Fenster offen lassen.</p>';
+ const w=async()=>{for(let f;f=q.shift();){try{f.d=await fetchDetails(f.tmdbId)}catch(e){}n++;$('#pg').textContent=n+' / '+tot;if(n%25===0){save();draw()}}};
+ await Promise.all([w(),w(),w(),w()]);save();draw();$('#dlg').close()}
+async function rematch(){
+ const q=films.filter(f=>f.title0&&!f.manual);
+ if(!q.length)return alert('Keine Filme zum Prüfen.');
+ if(!confirm('Alle '+q.length+' automatisch zugeordneten Filme neu prüfen? Nur eindeutige Treffer werden übernommen. Format, Edition und Notizen bleiben erhalten.'))return;
+ const taken=new Set(films.filter(f=>f.tmdbId).map(f=>f.tmdbId));
+ let n=0,ch=0;const tot=q.length;
+ $('#dlg').innerHTML='<h2>Prüfe…</h2><p id="pg"></p><p class="mut">Bitte Fenster offen lassen.</p>';
+ const w=async()=>{for(let f;f=q.shift();){try{const id=await bestMatch(f.title0);
+   if(id&&id!==f.tmdbId&&!taken.has(id)){taken.add(id);f.tmdbId=id;f.d=await fetchDetails(id);ch++}}catch(e){}
+   n++;$('#pg').textContent=n+' / '+tot}};
+ await Promise.all([w(),w(),w(),w()]);save();draw();
+ $('#dlg').innerHTML=`<h2>Fertig</h2><p>${ch} Zuordnungen korrigiert. Filme mit ⚠ oder doppeltem Treffer bitte über „Anderen Film zuordnen“ prüfen.</p><div class="bar"><button class="p" onclick="$('#dlg').close()">OK</button></div>`}
+
+function exp(){cfg.lastBackup=Date.now();save();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({films,wish,cfg},null,1)],{type:'application/json'}));a.download='filmsammlung-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+async function imp(file){let j;try{j=JSON.parse(await file.text())}catch(e){return alert('Ungültige Datei')}
+ if(!Array.isArray(j)){films=j.films||[];wish=j.wish||[];cfg={...cfg,...j.cfg};save();draw();$('#dlg').close();return}
+ if(!cfg.tmdb)return alert('Bitte zuerst den TMDB-Schlüssel speichern.');
+ const have=new Set(films.map(f=>f.title0));const q=j.filter(x=>!have.has(x.title)),total=q.length;let n=0,bad=0;
+ $('#dlg').innerHTML='<h2>Import läuft…</h2><p id="pg"></p><p class="mut">Bitte dieses Fenster offen lassen.</p>';
+ const clean=s=>s.replace(/[–:&’'.]/g,' ').replace(/\s+/g,' ').trim();
+ const taken=new Set(films.filter(f=>f.tmdbId).map(f=>f.tmdbId));
+ const work=async()=>{for(let x;x=q.shift();){
+  const f={id:crypto.randomUUID(),title0:x.title,format:x.format||'Nicht angegeben',edition:'',ean:'',notes:'',added:Date.now()+n};
+  try{const id=await bestMatch(x.title);if(id&&!taken.has(id)){taken.add(id);f.tmdbId=id;f.d=await fetchDetails(id)}}catch(e){}
+  if(!f.d){bad++;f.d={title:x.title,orig:'',year:'',poster:null,overview:'',genres:[],countries:[],directors:[],cast:[],unmatched:true}}
+  films.push(f);n++;$('#pg').textContent=`${n} / ${total} (nicht zugeordnet: ${bad})`;if(n%25===0){save();draw()}}};
+ await Promise.all([work(),work(),work(),work()]);save();draw();
+ $('#dlg').innerHTML=`<h2>Fertig</h2><p>${n} Filme importiert, ${bad} konnten nicht automatisch zugeordnet werden (mit ⚠ markiert).</p><div class="bar"><button class="p" onclick="$('#dlg').close()">OK</button></div>`}
+applyTheme();applyAccent();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
+draw();if(!cfg.tmdb)setTimeout(openSet,300);
+</script></body></html>
