@@ -133,6 +133,9 @@ dialog a:not(.chip2){color:var(--fg);text-decoration:underline;text-decoration-c
 .av{width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;background:var(--bd)}
 .ini{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--mut);background:var(--glass)}
 .more{margin-top:10px;font-size:13px;color:var(--mut)}
+.ttlrow{display:flex;align-items:center;gap:10px}
+.fsk{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex:none;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.c .f{font-size:10px;padding:2px 7px;letter-spacing:.04em}
 </style></head><body>
 <header>
 <h1>🎬 Filme <span class="mut" id="n"></span></h1>
@@ -377,6 +380,13 @@ function flyIn(dl){const r=originRect;originRect=null;const img=dl.querySelector
 function av(p,n){if(p)return `<img class="av" loading="lazy" src="https://image.tmdb.org/t/p/w185${p}" alt="">`;
  const ini=(n||'?').split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase();return `<span class="av ini">${esc(ini)}</span>`}
 function castChip(c){return `<a class="chip2 pc" target="_blank" href="${wiki(c.n)}">${av(c.p,c.n)}<span><b>${esc(c.n)}</b>${c.r?`<small>${esc(c.r)}</small>`:''}</span></a>`}
+function fmtShort(x){const s=x||'';
+ if(/4k/i.test(s))return['4K','#b8860b'];if(/3d/i.test(s))return['3D','#7c3aed'];
+ if(/blu/i.test(s))return['BD','#2563eb'];if(/dvd/i.test(s))return['DVD','#6b7280'];
+ if(/vhs/i.test(s))return['VHS','#92400e'];return[s?s.slice(0,6):'–','#4b5563']}
+function fmtPlaque(f){const [t,c]=fmtShort(f.format);return `<span class="f" style="background:${c}">${esc(t)}${f.d.unmatched?' ⚠':''}</span>`}
+function fskCircle(v){if(!v)return '';const col={'0':'#1e8e3e','6':'#e5b400','12':'#f08c00','16':'#e0463b','18':'#1f1f1f'}[String(v)]||'#4b5563';
+ return `<span class="fsk" style="background:${col}">${esc(v)}</span>`}
 function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
  ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
  $('#addb').textContent=t==='films'?'Hinzufügen':'Wunsch hinzufügen';
@@ -449,14 +459,14 @@ function draw(){
   let l=films.filter(f=>(!ff||f.format===ff)&&(!fr||serOf(f)===fr)&&(!chk||mism(f)||f.d.unmatched||dc[f.tmdbId]>1)&&(!noE||!f.ean)&&(!noSeen||!f.seen)&&advOk(f)&&((f.title0||'')+' '+f.d.title+' '+f.d.orig+' '+f.d.directors.join(' ')+' '+f.d.cast.map(c=>c.n).join(' ')+' '+f.edition).toLowerCase().includes(q));
   l.sort(so==='i'?(a,b)=>(+(b.d.imdb||b.d.tmdbRating||0))-(+(a.d.imdb||a.d.tmdbRating||0))||a.d.title.localeCompare(b.d.title,'de'):so==='g'?(a,b)=>((a.d.genres||[])[0]||'~').localeCompare((b.d.genres||[])[0]||'~','de')||a.d.title.localeCompare(b.d.title,'de'):so==='r'?(a,b)=>(serOf(a)||'~').localeCompare(serOf(b)||'~','de')||a.d.year-b.d.year:so==='y'?(a,b)=>a.d.year-b.d.year:so==='a'?(a,b)=>b.added-a.added:(a,b)=>a.d.title.localeCompare(b.d.title,'de'));
   $('#n').textContent=`(${l.length}${l.length!==films.length?'/'+films.length:''})`;
-  $('#grid').className=view==='list'?'list':'';$('#grid').innerHTML=(so==='l'?groupLoc(l):l).map(f=>f.hdr?`<div class="ghdr">${esc(f.hdr)}</div>`:view==='list'?listItem(f):`<div class="c${badgesOf(f).some(b=>b==='Mediabook'||b==='Steelbook')?' col':''}" onclick="openDetail('${f.id}')">${f.cover||f.d.poster?`<img loading="lazy" src="${f.cover?f.cover:IMG+'w342'+f.d.poster}">`:`<div class="np">${esc(f.d.title)}</div>`}<span class="f">${esc(f.format)}${f.d.unmatched?' ⚠':''}</span>${badgesOf(f).map((b,i)=>`<span class="bd" style="top:${8+i*26}px">${b}</span>`).join('')}<div class="t">${esc(f.title0||f.d.title)}<br><small>${esc(f.d.year)}</small></div></div>`).join('')||emptyHTML();
+  $('#grid').className=view==='list'?'list':'';$('#grid').innerHTML=(so==='l'?groupLoc(l):l).map(f=>f.hdr?`<div class="ghdr">${esc(f.hdr)}</div>`:view==='list'?listItem(f):`<div class="c${badgesOf(f).some(b=>b==='Mediabook'||b==='Steelbook')?' col':''}" onclick="openDetail('${f.id}')">${f.cover||f.d.poster?`<img loading="lazy" src="${f.cover?f.cover:IMG+'w342'+f.d.poster}">`:`<div class="np">${esc(f.d.title)}</div>`}${fmtPlaque(f)}${badgesOf(f).map((b,i)=>`<span class="bd" style="top:${8+i*26}px">${b}</span>`).join('')}<div class="t">${esc(f.title0||f.d.title)}<br><small>${esc(f.d.year)}</small></div></div>`).join('')||emptyHTML();
 }
 
 function openDetail(id){
   const f=films.find(x=>x.id===id),d=f.d,dl=$('#dlg');
   cfg.recent=[id,...(cfg.recent||[]).filter(x=>x!==id)].slice(0,5);save();dl.style.removeProperty('--tint');
   dl.innerHTML=`<div class="row">${d.poster||f.cover?`<img class="zc" crossorigin="anonymous" onclick="zoomCover(this.dataset.full)" data-full="${esc(f.cover||IMG+'original'+d.poster)}" onload="tintFrom(this,this.closest('dialog'))" src="${esc(f.cover||IMG+'w500'+d.poster)}">`:''}<div>
-  <div class="ttl">${esc(d.title)}</div><div class="meta">${esc(d.year)}${f.format?' · '+esc(f.format):''}${f.edition?' · '+esc(f.edition):''}</div>
+  <div class="ttlrow"><div class="ttl">${esc(d.title)}</div>${fskCircle(f.fsk||d.fsk)}</div><div class="meta">${esc(d.year)}${f.format?' · '+esc(f.format):''}${f.edition?' · '+esc(f.edition):''}</div>
   ${d.orig&&d.orig!==d.title?`<div class="mut">Originaltitel: ${esc(d.orig)}</div>`:''}
   ${f.title0&&mism(f)?`<div class="mut">⚠ Auf deiner Liste: ${esc(f.title0)}</div>`:''}${d.tagline?`<i class="mut">${esc(d.tagline)}</i>`:''}
   <div class="box"><b>Meine Version</b><br>Format: ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.loc?'<br>Lagerort: '+esc(f.loc):''}${f.box?'<br>Box: '+esc(f.box):''}${f.lentTo?'<br>Verliehen an: '+esc(f.lentTo)+(f.lentSince?' seit '+f.lentSince.split('-').reverse().join('.'):''):''}${f.region?'<br>Region: '+esc(f.region):''}${f.aspect?'<br>Bildformat: '+esc(f.aspect):''}${f.disks?'<br>Anzahl Disks: '+esc(f.disks):''}${f.bonus?'<br>Bonusmaterial: '+esc(f.bonus):''}${f.seen?'<br>✓ Gesehen':''}${(f.fsk||d.fsk)?'<br>FSK: '+esc(f.fsk||d.fsk):''}${f.langs?'<br>Sprachen: '+esc(f.langs):''}${f.subs?'<br>Untertitel: '+esc(f.subs):''}${serOf(f)?'<br>Filmreihe: '+esc(serOf(f)):''}${f.ean?'<br>Code: '+esc(f.ean):''}${f.notes?'<br>'+esc(f.notes):''}</div>
