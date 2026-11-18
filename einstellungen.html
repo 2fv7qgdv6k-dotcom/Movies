@@ -83,7 +83,7 @@ button.p{background:var(--ac);color:#fff;border-color:transparent}
 <div class="status" id="s_bak"></div>
 </div>
 
-<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.8</p>
+<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.9</p>
 </div>
 
 <script>
@@ -132,7 +132,7 @@ function renderAcc(msg){
  const link=user?friendLink():'';
  $('accBox').innerHTML=user
  ?`<p class="mut">Angemeldet als ${esc(user.email||'')}. Die App synchronisiert beim nächsten Öffnen.</p>
-   <div class="row"><button class="p" onclick="showFriendLink()">Freundes-Link anzeigen</button><button onclick="signOut()">Abmelden</button></div>
+   <div class="row"><button class="p" onclick="showFriendLink()">Freundes-Link anzeigen</button><button onclick="refreshFriends()">Freundesansicht aktualisieren</button><button onclick="signOut()">Abmelden</button></div>
    ${window._showLink?`<label>Freundes-Link (antippen, dann kopieren)</label><input id="flink" readonly value="${esc(link)}" onclick="this.select()">`:''}`
  :`<label>E-Mail</label><input id="em" type="email" autocomplete="email"><label>Passwort</label><input id="pw" type="password" autocomplete="current-password"><div class="row"><button class="p" onclick="signIn()">Anmelden</button><button onclick="signUp()">Konto anlegen</button></div>`
  +`<div class="status" id="s_acc">${esc(msg||'')}</div>`}
@@ -144,6 +144,7 @@ async function signUp(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)r
  const {error}=await sb.auth.signUp({email:e,password:p});
  renderAcc(error?'Fehler: '+error.message:'Konto angelegt. Falls eine Bestätigungsmail kommt, den Link öffnen und danach hier anmelden.')}
 function friendLink(){return location.origin+location.pathname.replace(/[^/]*$/,'')+'freunde.html?u='+user.id}
+async function refreshFriends(){films=JSON.parse(localStorage.getItem('films')||'[]');const ok=await cloudSave();renderAcc(ok?'Freundesansicht aktualisiert.':'Speichern fehlgeschlagen. Bitte später erneut versuchen.')}
 async function signOut(){await sb.auth.signOut();user=null;renderAcc('Abgemeldet.')}
 
 /* imdb ratings: find the IMDb id (via TMDB if missing), then rate via OMDb, then save locally and to the cloud */
@@ -152,7 +153,7 @@ async function tmdbImdbId(tid){const k=(cfg.tmdb||'').trim();if(!k||!tid)return 
  if(k.length>40)h.Authorization='Bearer '+k;else u.searchParams.set('api_key',k);
  try{const r=await (await fetch(u,{headers:h})).json();return r.imdb_id||''}catch(e){return ''}}
 async function cloudSave(){if(!sb||!user)return false;
- const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box}));
+ const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box,trailer:f.d.trailer||null}));
  const now=new Date().toISOString();
  const {error}=await sb.from('collections').upsert({user_id:user.id,data:{films,wish:JSON.parse(localStorage.getItem('wish')||'[]'),cfg:{formats:cfg.formats,accent:cfg.accent,theme:cfg.theme,fskCol:cfg.fskCol,lastFormat:cfg.lastFormat}},public_data:{films:pub,updated_at:now},updated_at:now},{onConflict:'user_id'});
  if(!error)localStorage.setItem('syncAt',now);

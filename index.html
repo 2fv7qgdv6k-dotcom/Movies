@@ -204,7 +204,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.1.8';
+const APP_VERSION='1.1.9';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -471,7 +471,7 @@ function sbInit(){if(!window.supabase)return;
 function setSync(t){const e=$('#syncmsg');if(e)e.textContent=t}
 function queuePush(){if(!sbUser)return;clearTimeout(pushT);pushT=setTimeout(pushNow,1500)}
 async function pushNow(){if(!sbUser||!sb)return;
- const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box}));
+ const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box,trailer:f.d.trailer||null}));
  const data={films,wish,cfg:{formats:cfg.formats,accent:cfg.accent,theme:cfg.theme,fskCol:cfg.fskCol,lastFormat:cfg.lastFormat}};
  const now=new Date().toISOString();
  const {error}=await sb.from('collections').upsert({user_id:sbUser.id,data,public_data:{films:pub,updated_at:now},updated_at:now},{onConflict:'user_id'});
