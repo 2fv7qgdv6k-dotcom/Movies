@@ -204,7 +204,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.1.4';
+const APP_VERSION='1.1.8';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -368,7 +368,9 @@ document.addEventListener('touchend',e=>{if($('#dlg').open)return;const dx=e.cha
 // Every new dialog content starts at the top
 new MutationObserver(()=>{$('#dlg').scrollTop=0}).observe($('#dlg'),{childList:true});
 // Tap next to a dialog closes it
-$('#dlg').addEventListener('click',e=>{if($('#k1'))return;const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.currentTarget.close()});
+let dlgDownOnBackdrop=false;
+$('#dlg').addEventListener('pointerdown',e=>{dlgDownOnBackdrop=(e.target===e.currentTarget)});
+$('#dlg').addEventListener('click',e=>{const onBg=dlgDownOnBackdrop&&e.target===e.currentTarget;dlgDownOnBackdrop=false;if(onBg)e.currentTarget.close()});
 
 function applyTheme(){const t=cfg.theme||'auto';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
  const b=$('#bth');if(b)b.textContent={auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Kino'}[t]}
@@ -395,6 +397,7 @@ function emptyHTML(){return films.length
  ?'<div class="empty"><div style="font-size:48px">🔎</div><b>Keine Treffer</b><p class="mut">Passe Suche oder Filter an.</p></div>'
  :'<div class="empty"><div style="font-size:48px">🎞️</div><b>Noch keine Filme</b><p class="mut">Tippe auf „＋ Film“, um deine Sammlung zu beginnen.</p></div>'}
 addEventListener('scroll',()=>document.documentElement.style.setProperty('--dy',(8+Math.min(scrollY,400)/400*8)+'px'),{passive:true});
+const TONS=['Dolby Digital 5.1','Dolby Digital 7.1','Dolby TrueHD','Dolby Atmos','DTS 5.1','DTS-HD MA','Stereo','Mono'];
 const LANGS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Original'];
 const SUBS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Keine'];
 const ASPECTS=['1.33:1','1.78:1','1.85:1','2.35:1','2.39:1'];
@@ -579,7 +582,7 @@ function openDetail(id){
   <div class="ttlrow"><div class="ttl">${esc(d.title)}</div>${fskCircle(f.fsk||d.fsk)}</div><div class="meta">${esc(d.year)}${f.format?' · '+esc(f.format):''}${f.edition?' · '+esc(f.edition):''}</div>
   ${d.orig&&d.orig!==d.title?`<div class="mut">Originaltitel: ${esc(d.orig)}</div>`:''}
   ${f.title0&&mism(f)?`<div class="mut">⚠ Auf deiner Liste: ${esc(f.title0)}</div>`:''}${d.tagline?`<i class="mut">${esc(d.tagline)}</i>`:''}
-  <div class="fq">${allFormats().map(x=>`<button class="chip ${x===f.format?'on':''}" data-v="${esc(x)}" onclick="setFormat('${id}',this.dataset.v)">${esc(x)}</button>`).join('')}</div><div class="box"><b>Meine Version</b><br>Format: ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.loc?'<br>Lagerort: '+esc(f.loc):''}${f.box?'<br>Box: '+esc(f.box):''}${f.lentTo?'<br>Verliehen an: '+esc(f.lentTo)+(f.lentSince?' seit '+f.lentSince.split('-').reverse().join('.'):''):''}${f.region?'<br>Region: '+esc(f.region):''}${f.aspect?'<br>Bildformat: '+esc(f.aspect):''}${f.disks?'<br>Anzahl Disks: '+esc(f.disks):''}${f.bonus?'<br>Bonusmaterial: '+esc(f.bonus):''}${f.seen?'<br>✓ Gesehen':''}${(f.fsk||d.fsk)?'<br>FSK: '+esc(f.fsk||d.fsk):''}${f.langs?'<br>Sprachen: '+esc(f.langs):''}${f.subs?'<br>Untertitel: '+esc(f.subs):''}${serOf(f)?'<br>Filmreihe: '+esc(serOf(f)):''}${f.ean?'<br>Code: '+esc(f.ean):''}${f.notes?'<br>'+esc(f.notes):''}</div>
+  <div class="fq">${allFormats().map(x=>`<button class="chip ${x===f.format?'on':''}" data-v="${esc(x)}" onclick="setFormat('${id}',this.dataset.v)">${esc(x)}</button>`).join('')}</div><div class="box"><b>Meine Version</b><br>Format: ${esc(f.format)}${f.edition?' · '+esc(f.edition):''}${f.loc?'<br>Lagerort: '+esc(f.loc):''}${f.box?'<br>Box: '+esc(f.box):''}${f.lentTo?'<br>Verliehen an: '+esc(f.lentTo)+(f.lentSince?' seit '+f.lentSince.split('-').reverse().join('.'):''):''}<br>Bildformat: ${esc(f.aspect||'–')}<br>Tonformat: ${esc(f.ton||'–')}${f.region?'<br>Region: '+esc(f.region):''}${f.disks?'<br>Anzahl Disks: '+esc(f.disks):''}${f.bonus?'<br>Bonusmaterial: '+esc(f.bonus):''}${f.seen?'<br>✓ Gesehen':''}${(f.fsk||d.fsk)?'<br>FSK: '+esc(f.fsk||d.fsk):''}${f.langs?'<br>Sprachen: '+esc(f.langs):''}${f.subs?'<br>Untertitel: '+esc(f.subs):''}${serOf(f)?'<br>Filmreihe: '+esc(serOf(f)):''}${f.ean?'<br>Code: '+esc(f.ean):''}${f.notes?'<br>'+esc(f.notes):''}</div>
   <p>${d.runtime?d.runtime+' Min · ':''}${esc(d.genres.join(', '))}<br>Land: ${esc(d.countries.join(', ')||'–')}<br>Produktionsjahr: ${esc(d.year||'–')}<br>Studio: ${esc(d.studio||'–')}<br>Originalsprache: ${esc(d.spoken||'–')}<br>Kinostart: ${esc(dde(d.kinostart)||'–')}<br>
   ⭐ IMDb: ${d.imdb?esc(d.imdb)+'/10':(cfg.omdb?'–':'– <small class="mut">(OMDb-Schlüssel in ⚙︎ eintragen)</small>')}${d.imdbId?` (<a target="_blank" href="https://www.imdb.com/title/${d.imdbId}">IMDb</a>)`:''}${d.tmdbRating?` · TMDB: ${d.tmdbRating}`:''}</p>
   </div></div>
@@ -636,11 +639,12 @@ function formStep(f,id){
   <label>Box (optional, z. B. Der Pate – Box)</label><input id="bx" list="bl" value="${esc(f.box||'')}"><datalist id="bl">${[...new Set(films.map(x=>x.box).filter(Boolean))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
   <label>Verliehen an (leer = nicht verliehen)</label><input id="lt" value="${esc(f.lentTo||'')}">
   <label>Verliehen seit</label><input id="ls" type="date" value="${esc(f.lentSince||'')}">
+  <label>Tonformat (z. B. Dolby Digital 5.1)</label><input id="ton" value="${esc(f.ton||'')}">${chips('ton',TONS,false)}
   <label>Notizen</label><textarea id="no" rows="2">${esc(f.notes||'')}</textarea>
   <div class="bar"><button onclick="$('#dlg').close()">Abbrechen</button><button class="p" onclick="commit('${id||''}')">Speichern</button></div>`;
 }
 function commit(id){
-  const o={lentTo:$('#lt').value.trim(),lentSince:$('#lt').value.trim()?($('#ls').value||new Date().toISOString().slice(0,10)):'',box:$('#bx').value.trim(),region:$('#rg2').value.trim(),aspect:$('#as').value.trim(),disks:$('#dk').value.trim(),bonus:$('#bo').value.trim(),loc:$('#lo').value.trim(),fsk:$('#fk').value,langs:$('#la').value.trim(),subs:$('#su').value.trim(),series:$('#se').value.trim(),format:$('#fm').value,edition:$('#ed').value.trim(),ean:$('#ea').value.trim(),notes:$('#no').value.trim()};cfg.lastFormat=o.format;
+  const o={lentTo:$('#lt').value.trim(),lentSince:$('#lt').value.trim()?($('#ls').value||new Date().toISOString().slice(0,10)):'',ton:$('#ton').value.trim(),box:$('#bx').value.trim(),region:$('#rg2').value.trim(),aspect:$('#as').value.trim(),disks:$('#dk').value.trim(),bonus:$('#bo').value.trim(),loc:$('#lo').value.trim(),fsk:$('#fk').value,langs:$('#la').value.trim(),subs:$('#su').value.trim(),series:$('#se').value.trim(),format:$('#fm').value,edition:$('#ed').value.trim(),ean:$('#ea').value.trim(),notes:$('#no').value.trim()};cfg.lastFormat=o.format;
   if(id)Object.assign(films.find(f=>f.id===id),o);
   else films.push({id:crypto.randomUUID(),tmdbId:draft.tmdbId,d:draft.d,added:Date.now(),...o});
   save();draw();$('#dlg').close();

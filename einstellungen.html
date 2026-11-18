@@ -83,7 +83,7 @@ button.p{background:var(--ac);color:#fff;border-color:transparent}
 <div class="status" id="s_bak"></div>
 </div>
 
-<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.5</p>
+<p class="mut" style="text-align:center;margin-top:24px">Version 1.1.8</p>
 </div>
 
 <script>
@@ -128,10 +128,15 @@ function delFmt(i){cfg.formats=[...allFormats()];cfg.formats.splice(i,1);store()
 let sb=null,user=null;
 function initSb(){if(!window.supabase)return;sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,detectSessionInUrl:true}});
  sb.auth.getSession().then(({data})=>{user=data.session?.user||null;renderAcc()})}
-function renderAcc(msg){$('accBox').innerHTML=user
- ?`<p class="mut">Angemeldet als ${esc(user.email||'')}. Die App synchronisiert beim nächsten Öffnen.</p><div class="row"><button class="p" onclick="showFriendLink()">Freundes-Link anzeigen</button><button onclick="signOut()">Abmelden</button></div>`
+function renderAcc(msg){
+ const link=user?friendLink():'';
+ $('accBox').innerHTML=user
+ ?`<p class="mut">Angemeldet als ${esc(user.email||'')}. Die App synchronisiert beim nächsten Öffnen.</p>
+   <div class="row"><button class="p" onclick="showFriendLink()">Freundes-Link anzeigen</button><button onclick="signOut()">Abmelden</button></div>
+   ${window._showLink?`<label>Freundes-Link (antippen, dann kopieren)</label><input id="flink" readonly value="${esc(link)}" onclick="this.select()">`:''}`
  :`<label>E-Mail</label><input id="em" type="email" autocomplete="email"><label>Passwort</label><input id="pw" type="password" autocomplete="current-password"><div class="row"><button class="p" onclick="signIn()">Anmelden</button><button onclick="signUp()">Konto anlegen</button></div>`
  +`<div class="status" id="s_acc">${esc(msg||'')}</div>`}
+function showFriendLink(){window._showLink=true;renderAcc();const i=document.getElementById('flink');if(i){i.scrollIntoView({block:'center'});i.select()}}
 async function signIn(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)return renderAcc('Bitte E-Mail und Passwort eingeben.');
  const {data,error}=await sb.auth.signInWithPassword({email:e,password:p});
  if(error)return renderAcc('Anmeldung fehlgeschlagen: '+error.message);user=data.user;renderAcc('Angemeldet.')}
@@ -139,7 +144,6 @@ async function signUp(){const e=$('em').value.trim(),p=$('pw').value;if(!e||!p)r
  const {error}=await sb.auth.signUp({email:e,password:p});
  renderAcc(error?'Fehler: '+error.message:'Konto angelegt. Falls eine Bestätigungsmail kommt, den Link öffnen und danach hier anmelden.')}
 function friendLink(){return location.origin+location.pathname.replace(/[^/]*$/,'')+'freunde.html?u='+user.id}
-function showFriendLink(){const l=friendLink();renderAcc('Diesen Link deinen Freunden schicken (nur lesen, keine privaten Angaben):\n'+l)}
 async function signOut(){await sb.auth.signOut();user=null;renderAcc('Abgemeldet.')}
 
 /* imdb ratings: find the IMDb id (via TMDB if missing), then rate via OMDb, then save locally and to the cloud */
