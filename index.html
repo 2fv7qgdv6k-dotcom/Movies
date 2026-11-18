@@ -179,6 +179,19 @@ dialog.out::backdrop{opacity:0;transition:opacity .22s}
 html{background:var(--bg1)}
 header{background:var(--bg1);backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:1px solid transparent;transition:background .25s ease,border-color .25s ease}
 header.sc{background:var(--glass2);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border-bottom-color:var(--bd)}
+
+/* scrolling inside an open window never moves the library behind it */
+dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+body.lock{position:fixed;left:0;right:0;overflow:hidden;width:100%}
+
+/* windows scroll on their own: no backdrop blur inside scrollable windows */
+:root{--dlgbg:rgba(246,247,251,.96)}
+:root[data-theme="light"]{--dlgbg:rgba(246,247,251,.96)}
+:root[data-theme="dark"],:root[data-theme="cinema"]{--dlgbg:rgba(30,30,42,.96)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--dlgbg:rgba(30,30,42,.96)}}
+dialog{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(180deg,var(--tint,transparent),transparent 55%),var(--dlgbg)!important}
+dialog::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.abar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--dlgbg)!important}
 </style></head><body>
 <header>
 <h1>Filme <span class="mut" id="n"></span></h1>
@@ -204,7 +217,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.1.9';
+const APP_VERSION='1.1.12';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -368,6 +381,12 @@ document.addEventListener('touchend',e=>{if($('#dlg').open)return;const dx=e.cha
 // Every new dialog content starts at the top
 new MutationObserver(()=>{$('#dlg').scrollTop=0}).observe($('#dlg'),{childList:true});
 // Tap next to a dialog closes it
+let lockY=0;
+function lockBody(){if(document.body.classList.contains('lock'))return;lockY=scrollY;document.body.style.top=-lockY+'px';document.body.classList.add('lock')}
+function unlockBody(){if(document.querySelector('dialog[open]'))return;document.body.classList.remove('lock');document.body.style.top='';window.scrollTo(0,lockY)}
+const _showModal=HTMLDialogElement.prototype.showModal;
+HTMLDialogElement.prototype.showModal=function(){_showModal.call(this);lockBody()};
+document.addEventListener('close',e=>{if(e.target.tagName==='DIALOG')setTimeout(unlockBody,0)},true);
 let dlgDownOnBackdrop=false;
 $('#dlg').addEventListener('pointerdown',e=>{dlgDownOnBackdrop=(e.target===e.currentTarget)});
 $('#dlg').addEventListener('click',e=>{const onBg=dlgDownOnBackdrop&&e.target===e.currentTarget;dlgDownOnBackdrop=false;if(onBg)e.currentTarget.close()});
