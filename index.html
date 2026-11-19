@@ -218,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.5';
+const APP_VERSION='1.5.1';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -541,8 +541,10 @@ const langRe=w=>new RegExp('\\b'+w+'\\b','i');
 function findLangs(t){return LANG_WORDS.filter(w=>langRe(w).test(t))}
 function findTones(t){const tp=[[/Dolby\s*Atmos/i,'Dolby Atmos'],[/Dolby\s*TrueHD/i,'Dolby TrueHD'],[/Dolby\s*Digital\s*7[.,]1/i,'Dolby Digital 7.1'],[/Dolby\s*Digital\s*5[.,]1/i,'Dolby Digital 5.1'],[/DTS[-\s]?HD\s*(Master\s*Audio|MA)/i,'DTS-HD MA'],[/DTS[-\s]?HD/i,'DTS-HD'],[/DTS\s*5[.,]1/i,'DTS 5.1'],[/\bStereo\b/i,'Stereo'],[/\bMono\b/i,'Mono']];
  const out=[];for(const [re,n] of tp){if(re.test(t)&&!out.includes(n))out.push(n)}return out}
+function wordsOf(data){if(data.words&&data.words.length)return data.words;const out=[];
+ (data.blocks||[]).forEach(b=>(b.paragraphs||[]).forEach(p=>(p.lines||[]).forEach(l=>(l.words||[]).forEach(w=>out.push(w)))));return out}
 function parseBack(data){
- const r={};const text=data.text||'';const words=(data.words||[]).filter(w=>w.text&&w.text.trim());
+ const r={};const text=data.text||'';const words=wordsOf(data).filter(w=>w.text&&w.text.trim());
  // disc count from the "DISC 1 / DISC 2 / DISC 3" labels
  const discs=new Set([...text.matchAll(/DISC\s*([1-9])/gi)].map(m=>m[1]));
  if(discs.size>=2)r.disks=String(Math.max(...[...discs].map(Number)));
