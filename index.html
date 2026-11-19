@@ -209,6 +209,7 @@ dialog::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!imp
 <dialog id="dlg"></dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="quiz.js"></script>
 <script>
 const FORMATS=['Nicht angegeben','DVD','Blu-ray','4K UHD','VHS','HD DVD','LaserDisc','Sonstiges'];
 const $=s=>document.querySelector(s);
@@ -217,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.1.12';
+const APP_VERSION='1.2';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -476,7 +477,7 @@ function applyFilters(){$('#ff').value=$('#x_ff').value;$('#fr').value=$('#x_fr'
 function clearFilters(){noE=false;noSeen=false;adv={};$('#ff').value='';$('#fr').value='';$('#so').value='t';
  $('#bnb').className='';$('#bns').className='';$('#bad').className='';$('#dlg').close();draw()}
 function moreMenu(){const th=({auto:'Auto',dark:'Dunkel',light:'Hell',cinema:'Kino'})[cfg.theme||'auto'];
- const m=[['Schnellcheck','quick()',1],['Zufallsfilm','roulette()',1],['Verliehen','loans()',1],['Statistik','stats()',1],['Ansicht wechseln','toggleView()',1],['Design: '+th,'cycleTheme();moreMenu()',0],['Einstellungen',"location.href='einstellungen.html'",1]];
+ const m=[['Schnellcheck','quick()',1],['Zufallsfilm','roulette()',1],['Verliehen','loans()',1],['Statistik','stats()',1],['Ansicht wechseln','toggleView()',1],['Design: '+th,'cycleTheme();moreMenu()',0],['Quiz','openQuiz()',1],['Einstellungen',"location.href='einstellungen.html'",1]];
  $('#dlg').innerHTML=`<h2>Mehr</h2><div class="mlist">${m.map(([t,c,cl])=>`<button class="mrow" onclick="${cl?"$('#dlg').close();":''}${c}">${t}</button>`).join('')}</div>`;
  if(!$('#dlg').open)$('#dlg').showModal()}
 const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
@@ -490,7 +491,7 @@ function sbInit(){if(!window.supabase)return;
 function setSync(t){const e=$('#syncmsg');if(e)e.textContent=t}
 function queuePush(){if(!sbUser)return;clearTimeout(pushT);pushT=setTimeout(pushNow,1500)}
 async function pushNow(){if(!sbUser||!sb)return;
- const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box,trailer:f.d.trailer||null}));
+ const pub=films.map(f=>({id:f.id,title:f.d.title,year:f.d.year,format:f.format,edition:f.edition,region:f.region,aspect:f.aspect,lang:f.langs,subs:f.subs,fsk:f.fsk||f.d.fsk,poster:f.d.poster,overview:f.d.overview,runtime:f.d.runtime,genres:f.d.genres,countries:f.d.countries,directors:f.d.directors,dirs:f.d.dirs,cast:(f.d.cast||[]).slice(0,10).map(c=>({n:c.n,r:c.r,p:c.p})),studio:f.d.studio,spoken:f.d.spoken,kinostart:f.d.kinostart,imdb:f.d.imdb||f.d.tmdbRating,box:f.box,trailer:f.d.trailer||null,series:f.series||f.d.collection||''}));
  const data={films,wish,cfg:{formats:cfg.formats,accent:cfg.accent,theme:cfg.theme,fskCol:cfg.fskCol,lastFormat:cfg.lastFormat}};
  const now=new Date().toISOString();
  const {error}=await sb.from('collections').upsert({user_id:sbUser.id,data,public_data:{films:pub,updated_at:now},updated_at:now},{onConflict:'user_id'});
@@ -519,6 +520,7 @@ function accInner(){return sbUser?
  :`<label>E-Mail</label><input id="acc_mail" type="email" autocomplete="email"><label>Passwort</label><input id="acc_pw" type="password" autocomplete="current-password"><div class="bar"><button class="p" onclick="sbLogin()">Anmelden</button><button onclick="sbSignup()">Konto anlegen</button></div>`}
 function accountEditor(){return `<h3 class="sh">Konto & Sync</h3><div id="acc">${accInner()}</div><small id="syncmsg" class="mut"></small>`}
 addEventListener('scroll',()=>document.querySelector('header').classList.toggle('sc',scrollY>30),{passive:true});
+function openQuiz(){$('#dlg').innerHTML='<div id="quizbox"></div>';if(!$('#dlg').open)$('#dlg').showModal();Quiz.renderQuiz($('#quizbox'),films,()=>$('#dlg').close())}
 function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
  ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
  $('#addb').setAttribute('aria-label',t==='films'?'Hinzufügen':'Wunsch hinzufügen');

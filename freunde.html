@@ -67,13 +67,14 @@ a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--bd)}
 </style></head>
 <body>
 <header id="hd">
- <div class="top"><h1>Filmsammlung <span class="muted" id="n"></span></h1><button class="pill" id="thb" onclick="cycleTheme()">Auto</button></div>
+ <div class="top"><h1>Filmsammlung <span class="muted" id="n"></span></h1><button class="pill" onclick="openFriendQuiz()">Quiz</button><button class="pill" id="thb" onclick="cycleTheme()">Auto</button></div>
  <div class="row"><input id="q" placeholder="Suchen: Titel, Regie, Darsteller" oninput="draw()"><select id="ff" onchange="draw()" style="max-width:40%"><option value="">Alle</option></select></div>
  <div class="upd" id="upd"></div>
 </header>
 <div id="msg" class="msg">Lade Sammlung…</div>
 <div id="grid"></div>
 <div id="sheet" onclick="if(event.target.id==='sheet')close2()"><div class="card" id="card"></div></div>
+<script src="quiz.js"></script>
 <script>
 const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
 const SB_KEY='sb_publishable_5yHZHjPfHjZpams4gvregw_fQZiw3Ko';
@@ -141,6 +142,7 @@ function show(id){const f=films.find(x=>x.id===id);if(!f)return;shown=id;
  <button class="close" onclick="close2()">Schließen</button>`;
  $('#sheet').classList.add('on')}
 function close2(){shown=null;$('#sheet').classList.remove('on')}
+function openFriendQuiz(){shown=null;$('#card').innerHTML='<div class="handle"></div><div id="quizbox"></div><button class="close" onclick="close2()">Schließen</button>';$('#sheet').classList.add('on');Quiz.renderQuiz($('#quizbox'),films,close2)}
 function zoomIt(src){const d=document.createElement('div');d.className='zoomov';d.innerHTML='<img alt="">';d.firstChild.src=src;d.onclick=()=>d.remove();document.body.appendChild(d)}
 applyTheme();start();
 </script></body></html>
