@@ -218,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.2';
+const APP_VERSION='1.2.1';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -678,16 +678,32 @@ function pickCover(id){const i=document.createElement('input');i.type='file';i.a
 function relink(id){const f=films.find(x=>x.id===id);openAdd();draft.relink=id;$('#s').value=f.title0||f.d.title}
 function openEdit(id){const f=films.find(x=>x.id===id);draft={d:f.d,tmdbId:f.tmdbId};formStep(f,id);}
 
-let stream,loop;
+let stream=null,loop=null;
+function loadZX(){return new Promise((res,rej)=>{if(window.ZXing)return res();const s=document.createElement('script');
+ s.src='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)})}
 async function scan(){
-  const box=$('#scanbox');
-  if(!('BarcodeDetector' in window)){box.innerHTML='<p>Dieser Browser kann keine Codes scannen. Bitte Chrome (Android/Desktop) nutzen, oder Titel eintippen.</p>';return}
-  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});}catch(e){box.innerHTML='<p>Kein Kamerazugriff.</p>';return}
-  box.innerHTML='<video id="v" autoplay playsinline muted></video>';const v=$('#v');v.srcObject=stream;
-  const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','qr_code']});
-  loop=setInterval(async()=>{try{const c=await det.detect(v);if(c.length){stopScan();(onCode||gotCode)(c[0].rawValue)}}catch(e){}},400);
+ const box=$('#scanbox');if(!box)return;
+ box.innerHTML='<p class="mut">Kamera wird gestartet…</p>';
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})}
+ catch(e){box.innerHTML='<p>Kein Kamerazugriff. In den Einstellungen des iPads die Kamera für Safari bzw. die Filme-App erlauben.</p>';return}
+ box.innerHTML='<video id="v" autoplay playsinline muted style="width:100%;border-radius:14px;background:#000"></video><p class="mut" style="font-size:13px">Barcode ruhig vor die Kamera halten.</p>';
+ const v=$('#v');v.srcObject=stream;await v.play().catch(()=>{});
+ const done=code=>{stopScan();(onCode||gotCode)(code)};
+ if('BarcodeDetector' in window){
+   const det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','qr_code']});
+   loop=setInterval(async()=>{try{const c=await det.detect(v);if(c.length)done(c[0].rawValue)}catch(e){}},400);return}
+ try{
+   await loadZX();
+   const hints=new Map();
+   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E,ZXing.BarcodeFormat.QR_CODE]);
+   const reader=new ZXing.MultiFormatReader();reader.setHints(hints);
+   const c=document.createElement('canvas');
+   loop=setInterval(()=>{if(!v.videoWidth)return;c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+     try{const lum=new ZXing.HTMLCanvasElementLuminanceSource(c);const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+       const res=reader.decode(bmp);done(res.getText())}catch(e){}},350);
+ }catch(e){box.innerHTML+='<p>Der Scanner konnte nicht geladen werden. Bitte Titel eintippen.</p>'}
 }
-function stopScan(){clearInterval(loop);stream?.getTracks().forEach(t=>t.stop())}
+function stopScan(){clearInterval(loop);loop=null;stream?.getTracks().forEach(t=>t.stop());stream=null}
 $('#dlg').addEventListener('close',stopScan);
 async function gotCode(code){
   draft.ean=code;$('#scanbox').innerHTML=`<p>Code erkannt: <b>${esc(code)}</b> – suche Produkt…</p>`;
