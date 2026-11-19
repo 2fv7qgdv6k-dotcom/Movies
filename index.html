@@ -218,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.5.1';
+const APP_VERSION='1.5.2';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -533,8 +533,18 @@ function loadTess(){return new Promise((res,rej)=>{if(window.Tesseract)return re
 function ocrPick(){document.getElementById('ocrfile').click()}
 async function ocrRun(file){if(!file)return;const out=$('#ocrout');
  out.innerHTML='<p class="mut">Text wird erkannt … beim ersten Mal lädt die Erkennung einige Megabyte.</p>';
- try{await loadTess();const {data}=await Tesseract.recognize(file,'deu+eng');
-  ocrPending=parseBack(data);showOcr(ocrPending,data.text)}
+ try{await loadTess();
+  // 1) whole photo: format, edition and bonus keywords
+  const full=await Tesseract.recognize(file,'deu+eng');
+  const r=parseBack(full.data);
+  // 2) lower part only, greyscale and contrast raised: the sound/subtitle table reads much better
+  const bmp=await createImageBitmap(file);const sy=Math.round(bmp.height*0.45),sh=bmp.height-sy,k=2.2;
+  const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*k);cv.height=Math.round(sh*k);
+  const cx=cv.getContext('2d');cx.filter='grayscale(1) contrast(1.6)';cx.drawImage(bmp,0,sy,bmp.width,sh,0,0,cv.width,cv.height);
+  const tab=await Tesseract.recognize(cv,'deu+eng');
+  r.tableLines=(tab.data.text||'').split('\n').map(s=>s.trim()).filter(s=>/Dolby|DTS|Surround|Stereo|Mono|Atmos|Deutsch|Englisch|Französisch|Italienisch|Spanisch|Japanisch|Türkisch|Polnisch|Russisch|Ungarisch|Arabisch|Griechisch|Koreanisch|Thai|Niederländisch|Dänisch|Schwedisch|Norwegisch|Finnisch|Tschechisch|Slowakisch|Rumänisch|Ukrainisch|Kroatisch|Hebräisch|Mandarin|Kantonesisch|Portugiesisch|Isländisch|UHD|Full Frame|Disc/i.test(s)&&s.length>8);
+  ocrPending=r;showOcr(r,full.data.text);
+ }
  catch(e){out.innerHTML='<p>Die Erkennung konnte nicht gestartet werden. Bitte Internetverbindung prüfen.</p>'}}
 const LANG_WORDS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Türkisch','Polnisch','Russisch','Portugiesisch','Niederländisch','Dänisch','Schwedisch','Norwegisch','Finnisch','Ungarisch','Tschechisch','Slowakisch','Rumänisch','Griechisch','Hebräisch','Arabisch','Isländisch','Ukrainisch','Kroatisch','Serbisch','Bulgarisch','Koreanisch','Mandarin','Kantonesisch','Thai','Hindi','Litauisch','Lettisch','Estnisch','Slowenisch'];
 const langRe=w=>new RegExp('\\b'+w+'\\b','i');
@@ -584,7 +594,7 @@ function parseBack(data){
  r.raw=text;return r}
 function showOcr(r,raw){
  const items=[['Format','format'],['Edition / Version','edition'],['Bonusmaterial (Schlagworte)','bonus']].filter(([l,k])=>r[k]);
- $('#ocrout').innerHTML=(r.tableMissing?'<p class="mut">Die Tabelle mit Bild, Ton und Untertitel wurde nicht erkannt. Ton und Untertitel bitte über die Auswahlfelder eintragen.</p>':'')+(items.length
+ $('#ocrout').innerHTML=(r.tableLines&&r.tableLines.length?'<div class="box" style="margin:8px 0"><b>Tabelle (zum Abschreiben)</b><pre style="white-space:pre-wrap;font-size:13px;margin:6px 0 0">'+esc(r.tableLines.join('\n'))+'</pre><small class="mut">Ton und Untertitel bitte unten in die Auswahl übertragen.</small></div>':'')+(r.tableMissing?'<p class="mut">Die Tabelle mit Bild, Ton und Untertitel wurde nicht erkannt. Ton und Untertitel bitte über die Auswahlfelder eintragen.</p>':'')+(items.length
   ?`<div style="margin-top:8px">${items.map(([l,k])=>`<div><b>${l}:</b> ${esc(r[k])}</div>`).join('')}</div>
     <div class="bar"><button class="p" type="button" onclick="applyOcr()">Übernehmen</button></div>
     <details style="margin-top:8px"><summary class="mut">erkannter Text</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(raw||'')}</pre></details>`
