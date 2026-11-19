@@ -192,10 +192,14 @@ body.lock{position:fixed;left:0;right:0;overflow:hidden;width:100%}
 dialog{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:linear-gradient(180deg,var(--tint,transparent),transparent 55%),var(--dlgbg)!important}
 dialog::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .abar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:var(--dlgbg)!important}
+.sbox{position:relative;flex:1;min-width:140px;display:flex}
+.sbox #q{width:100%;padding-right:40px}
+.qclr{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:0;background:rgba(127,127,150,.28);color:var(--fg);padding:0;display:none;align-items:center;justify-content:center;font-size:13px;line-height:1;cursor:pointer}
+.qclr.on{display:inline-flex}
 </style></head><body>
 <header>
 <h1>Filme <span class="mut" id="n"></span></h1>
-<input id="q" placeholder="Suchen…" autocomplete="off" oninput="draw();sugg()" onblur="setTimeout(sgClose,200)"><div id="sg"></div>
+<div class="sbox"><input id="q" placeholder="Suchen…" autocomplete="off" oninput="draw();sugg();qSync()" onblur="setTimeout(sgClose,200)"><button type="button" id="qclr" class="qclr" aria-label="Suche löschen" onmousedown="event.preventDefault()" onclick="qClear()">✕</button><div id="sg"></div></div>
 <div class="seg"><button id="t1" class="p" onclick="setTab('films')">Sammlung</button><button id="t2" onclick="setTab('wish')">Wunsch</button></div>
 <button class="ibtn" onclick="filterSheet()" aria-label="Filter"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg></button>
 <button class="ibtn p" id="addb" onclick="openAdd()" aria-label="Hinzufügen"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -218,7 +222,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.5.3';
+const APP_VERSION='1.5.4';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -404,7 +408,7 @@ function sugg(){const q=nz($('#q').value);const el=$('#sg');if(q.length<2){el.in
  const fs=films.filter(f=>nz(f.d.title).includes(q)||nz(f.title0).includes(q)).slice(0,5);
  const ps=[...new Set(films.flatMap(f=>[...(f.d.directors||[]),...(f.d.cast||[]).map(c=>c.n)]))].filter(n=>nz(n).includes(q)).slice(0,4);
  el.innerHTML=(fs.length||ps.length)?`<div class="sgb">${fs.map(f=>`<div class="sgi" onclick="sgClose();openDetail('${f.id}')"><b>${esc(f.d.title)}</b> <small class="mut">${esc(f.d.year)} · ${esc(f.format)}</small></div>`).join('')}${ps.map(n=>`<div class="sgi" data-n="${esc(n)}" onclick="pickPerson(this.dataset.n)">👤 ${esc(n)}</div>`).join('')}</div>`:''}
-function pickPerson(n){$('#q').value=n;sgClose();draw()}
+function pickPerson(n){$('#q').value=n;qSync();sgClose();draw()}
 function sgClose(){const e=$('#sg');if(e)e.innerHTML=''}
 function boxMembers(f){if(!f.box)return'';
  const m=films.filter(x=>x.box===f.box&&x.id!==f.id);
@@ -855,4 +859,6 @@ async function imp(file){let j;try{j=JSON.parse(await file.text())}catch(e){retu
 applyTheme();applyAccent();sbInit();if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 draw();if(!cfg.tmdb)setTimeout(openSet,300);
+function qSync(){const b=$('#qclr');if(b)b.classList.toggle('on',!!$('#q').value)}
+function qClear(){const q=$('#q');q.value='';draw();sgClose();qSync();q.focus()}
 </script></body></html>

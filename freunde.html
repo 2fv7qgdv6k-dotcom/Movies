@@ -64,11 +64,15 @@ a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--bd)}
 .close{margin-top:14px;width:100%;padding:13px;border-radius:16px;font:inherit;background:var(--glass2);color:var(--fg);border:1px solid var(--bd);cursor:pointer}
 .zoomov{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:70;padding:14px;cursor:zoom-out}
 .zoomov img{max-width:100%;max-height:100%;object-fit:contain;border-radius:16px}
+.sbox{position:relative;flex:1;min-width:0;display:flex}
+.sbox #q{width:100%;padding-right:40px}
+.qclr{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:0;background:rgba(127,127,150,.28);color:var(--fg);padding:0;display:none;align-items:center;justify-content:center;font-size:13px;line-height:1;cursor:pointer}
+.qclr.on{display:inline-flex}
 </style></head>
 <body>
 <header id="hd">
  <div class="top"><h1>Filmsammlung <span class="muted" id="n"></span></h1><button class="pill" onclick="openFriendQuiz()">Quiz</button><button class="pill" id="thb" onclick="cycleTheme()">Auto</button></div>
- <div class="row"><input id="q" placeholder="Suchen: Titel, Regie, Darsteller" oninput="draw()"><select id="ff" onchange="draw()" style="max-width:40%"><option value="">Alle</option></select></div>
+ <div class="row"><div class="sbox"><input id="q" placeholder="Suchen: Titel, Regie, Darsteller" oninput="draw();qSync()"><button type="button" id="qclr" class="qclr" aria-label="Suche löschen" onmousedown="event.preventDefault()" onclick="qClear()">✕</button></div><select id="ff" onchange="draw()" style="max-width:40%"><option value="">Alle</option></select></div>
  <div class="upd" id="upd"></div>
 </header>
 <div id="msg" class="msg">Lade Sammlung…</div>
@@ -144,5 +148,7 @@ function show(id){const f=films.find(x=>x.id===id);if(!f)return;shown=id;
 function close2(){shown=null;$('#sheet').classList.remove('on')}
 function openFriendQuiz(){shown=null;$('#card').innerHTML='<div class="handle"></div><div id="quizbox"></div><button class="close" onclick="close2()">Schließen</button>';$('#sheet').classList.add('on');Quiz.renderQuiz($('#quizbox'),films,close2)}
 function zoomIt(src){const d=document.createElement('div');d.className='zoomov';d.innerHTML='<img alt="">';d.firstChild.src=src;d.onclick=()=>d.remove();document.body.appendChild(d)}
+function qSync(){const b=document.getElementById('qclr');if(b)b.classList.toggle('on',!!document.getElementById('q').value)}
+function qClear(){document.getElementById('q').value='';draw();qSync();document.getElementById('q').focus()}
 applyTheme();start();
 </script></body></html>
