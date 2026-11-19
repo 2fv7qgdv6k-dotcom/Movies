@@ -218,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.5.2';
+const APP_VERSION='1.5.3';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -417,7 +417,7 @@ function emptyHTML(){return films.length
  ?'<div class="empty"><div style="font-size:48px">🔎</div><b>Keine Treffer</b><p class="mut">Passe Suche oder Filter an.</p></div>'
  :'<div class="empty"><div style="font-size:48px">🎞️</div><b>Noch keine Filme</b><p class="mut">Tippe auf „＋ Film“, um deine Sammlung zu beginnen.</p></div>'}
 addEventListener('scroll',()=>document.documentElement.style.setProperty('--dy',(8+Math.min(scrollY,400)/400*8)+'px'),{passive:true});
-const LANGS2=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Türkisch','Polnisch','Russisch','Portugiesisch','Niederländisch','Dänisch','Schwedisch','Norwegisch','Finnisch','Ungarisch','Tschechisch','Griechisch','Koreanisch','Mandarin','Original'];
+const ALL_LANGS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Portugiesisch','Brasilianisch','Niederländisch','Flämisch','Dänisch','Schwedisch','Norwegisch','Finnisch','Isländisch','Estnisch','Lettisch','Litauisch','Polnisch','Tschechisch','Slowakisch','Ungarisch','Rumänisch','Bulgarisch','Griechisch','Kroatisch','Serbisch','Bosnisch','Slowenisch','Mazedonisch','Albanisch','Russisch','Ukrainisch','Weißrussisch','Türkisch','Arabisch','Hebräisch','Persisch','Hindi','Bengalisch','Tamil','Urdu','Japanisch','Koreanisch','Mandarin','Kantonesisch','Thai','Vietnamesisch','Indonesisch','Malaiisch','Tagalog','Chinesisch','Swahili','Afrikaans','Katalanisch','Baskisch','Irisch','Walisisch','Latein','Original'];
 const TONS2=['Dolby Digital 5.1','Dolby Digital 7.1','Dolby Digital 2.0','Dolby TrueHD','Dolby TrueHD 7.1','Dolby Atmos','DTS 5.1','DTS 7.1','DTS-HD MA','Stereo','Mono'];
 const DISC_TYPES=['4K UHD Disc','Blu-ray Disc','DVD','Bonus-Disc (Blu-ray)','Bonus-Disc (DVD)'];
 const DISC_ASPECTS=['2.39:1','2.35:1','2.40:1','1.85:1','1.78:1','1.33:1','16:9','4:3'];
@@ -605,7 +605,7 @@ function applyOcr(){const r=ocrPending||{};
  if(r.bonus)$('#bo').value=r.bonus;
  $('#ocrout').insertAdjacentHTML('beforeend','<p class="mut">Übernommen. Tonspuren und Disc-Aufbau bitte unten selbst eintragen, dann prüfen und speichern.</p>')}
 let tracksDraft=[],discsDraft=[];
-function tracksEditor(){return tracksDraft.map((t,i)=>`<div class="trow"><select onchange="tracksDraft[${i}].lang=this.value">${LANGS2.map(l=>`<option${l===t.lang?' selected':''}>${l}</option>`).join('')}</select><select onchange="tracksDraft[${i}].tone=this.value">${TONS2.map(x=>`<option${x===t.tone?' selected':''}>${x}</option>`).join('')}</select><button type="button" onclick="tracksDraft.splice(${i},1);rerenderTracks()">✕</button></div>`).join('')+'<div class="bar"><button type="button" onclick="tracksDraft.push({lang:\'Deutsch\',tone:\'Dolby Digital 5.1\'});rerenderTracks()">+ Tonspur</button></div>'}
+function tracksEditor(){return tracksDraft.map((t,i)=>`<div class="trow"><select onchange="tracksDraft[${i}].lang=this.value">${ALL_LANGS.map(l=>`<option${l===t.lang?' selected':''}>${l}</option>`).join('')}</select><select onchange="tracksDraft[${i}].tone=this.value">${TONS2.map(x=>`<option${x===t.tone?' selected':''}>${x}</option>`).join('')}</select><button type="button" onclick="tracksDraft.splice(${i},1);rerenderTracks()">✕</button></div>`).join('')+'<div class="bar"><button type="button" onclick="tracksDraft.push({lang:\'Deutsch\',tone:\'Dolby Digital 5.1\'});rerenderTracks()">+ Tonspur</button></div>'}
 function rerenderTracks(){$('#trkbox').innerHTML=tracksEditor()}
 function discsEditor(){return discsDraft.map((d,i)=>`<div class="trow"><select onchange="discsDraft[${i}].label=this.value">${DISC_TYPES.map(x=>`<option${x===d.label?' selected':''}>${x}</option>`).join('')}</select><select onchange="discsDraft[${i}].aspect=this.value">${DISC_ASPECTS.map(x=>`<option${x===d.aspect?' selected':''}>${x}</option>`).join('')}</select><button type="button" onclick="discsDraft.splice(${i},1);rerenderDiscs()">✕</button></div>`).join('')+'<div class="bar"><button type="button" onclick="discsDraft.push({label:\'4K UHD Disc\',aspect:\'2.39:1\'});rerenderDiscs()">+ Disc</button></div>'}
 function rerenderDiscs(){$('#discbox').innerHTML=discsEditor()}
@@ -742,7 +742,7 @@ function formStep(f,id){tracksDraft=(f.tracks||[]).map(x=>({...x}));discsDraft=(
   <label>Barcode / EAN</label><div style="display:flex;gap:8px"><input id="ea" style="flex:1" value="${esc(f.ean??draft.ean??'')}"><button onclick="scanInto()">📷 Scannen</button></div><div id="scanbox"></div>
   <label>FSK (leer = automatisch${d.fsk?': '+d.fsk:''})</label><select id="fk"><option value="">Automatisch</option>${['0','6','12','16','18'].map(x=>`<option ${x===f.fsk?'selected':''}>${x}</option>`).join('')}</select>
   
-  <label>Untertitel (z. B. Deutsch, Englisch)</label><input id="su" value="${esc(f.subs||'')}">${chips('su',SUBS,true)}
+  <label>Untertitel (z. B. Deutsch, Englisch)</label><input id="su" value="${esc(f.subs||'')}">${chips('su',SUBS,true)}<select style="margin-top:8px;width:100%" onchange="pickChip('su',this.value,true);this.value=''"><option value="">Weitere Untertitelsprache wählen …</option>${ALL_LANGS.filter(x=>x!=='Original').map(x=>`<option>${x}</option>`).join('')}</select>
   <label>Filmreihe (leer = automatisch${d.collection?': '+esc(d.collection):''})</label><input id="se" list="sl" value="${esc(f.series||'')}"><datalist id="sl">${[...new Set(films.map(serOf).filter(Boolean))].map(s=>`<option value="${esc(s)}">`).join('')}</datalist>
   <label>Lagerort (z. B. Wohnzimmer Regal 2)</label><input id="lo" value="${esc(f.loc||'')}">
   <label>Region (z. B. B)</label><input id="rg2" value="${esc(f.region||'')}">${chips('rg2',REGIONS,false)}
