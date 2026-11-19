@@ -68,6 +68,9 @@ a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--bd)}
 .sbox #q{width:100%;padding-right:40px}
 .qclr{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:0;background:rgba(127,127,150,.28);color:var(--fg);padding:0;display:none;align-items:center;justify-content:center;font-size:13px;line-height:1;cursor:pointer}
 .qclr.on{display:inline-flex}
+.navb{position:fixed;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:0;background:rgba(20,20,30,.35);color:#fff;font-size:26px;line-height:1;padding:0;z-index:30;cursor:pointer;display:none}
+.navb.on{display:block}
+.navb.nl{left:10px}.navb.nr{right:10px}
 </style></head>
 <body>
 <header id="hd">
@@ -77,7 +80,7 @@ a{color:var(--fg);text-decoration:underline;text-decoration-color:var(--bd)}
 </header>
 <div id="msg" class="msg">Lade Sammlung…</div>
 <div id="grid"></div>
-<div id="sheet" onclick="if(event.target.id==='sheet')close2()"><div class="card" id="card"></div></div>
+<div id="sheet" onclick="if(event.target.id==='sheet')close2()"><div class="card" id="card"></div><button class="navb nl" id="fnl" onclick="stepF(-1)" aria-label="Vorheriger Film">‹</button><button class="navb nr" id="fnr" onclick="stepF(1)" aria-label="Nächster Film">›</button></div>
 <script src="quiz.js"></script>
 <script>
 const SB_URL='https://gyalkanebumopapqhrlk.supabase.co';
@@ -126,7 +129,7 @@ function draw(){
  const q=nz($('#q').value),ff=$('#ff').value;
  const l=films.filter(f=>(!ff||f.format===ff)&&(!q||nz([f.title,(f.directors||[]).join(' '),(f.cast||[]).map(c=>c.n).join(' ')].join(' ')).includes(q)))
    .sort((a,b)=>(a.title||'').localeCompare(b.title||'','de'));
- $('#n').textContent=`(${l.length}${l.length!==films.length?'/'+films.length:''})`;
+ window.viewList=l.map(f=>f.id);$('#n').textContent=`(${l.length}${l.length!==films.length?'/'+films.length:''})`;
  $('#grid').innerHTML=l.map(f=>{const p=plaque(f.format);return `<div class="c" onclick="show('${f.id}')">${f.poster?`<img loading="lazy" src="${IMG}w342${f.poster}" alt="">`:`<div class="np" style="background:#8884">${esc(f.title)}</div>`}<span class="f" style="background:${p.c}">${esc(p.t)}</span><div class="t">${esc(f.title)}<br><small>${esc(f.year||'')}</small></div></div>`}).join('')||'<p class="msg">Keine Treffer.</p>'}
 function show(id){const f=films.find(x=>x.id===id);if(!f)return;shown=id;
  const fsk=f.fsk?`<span class="fsk" style="background:${FSK[String(f.fsk)]||'#4b5563'}">${esc(f.fsk)}</span>`:'';
@@ -144,9 +147,16 @@ function show(id){const f=films.find(x=>x.id===id);if(!f)return;shown=id;
  ${(f.directors||[]).length?`<div class="sec"><h3>Regie</h3><div class="chips">${(f.dirs||f.directors.map(n=>({n}))).map(x=>`<a class="pc" href="${wiki(x.n)}" target="_blank">${av(x.p,x.n)}<span>${esc(x.n)}</span></a>`).join('')}</div></div>`:''}
  ${(f.cast||[]).length?`<div class="sec"><h3>Darsteller</h3><div class="chips">${f.cast.map(c=>`<a class="pc" href="${wiki(c.n)}" target="_blank">${av(c.p,c.n)}<span>${esc(c.n)}${c.r?`<small>${esc(c.r)}</small>`:''}</span></a>`).join('')}</div></div>`:''}
  <button class="close" onclick="close2()">Schließen</button>`;
- $('#sheet').classList.add('on')}
+ navState(id);$('#sheet').classList.add('on')}
 function close2(){shown=null;$('#sheet').classList.remove('on')}
-function openFriendQuiz(){shown=null;$('#card').innerHTML='<div class="handle"></div><div id="quizbox"></div><button class="close" onclick="close2()">Schließen</button>';$('#sheet').classList.add('on');Quiz.renderQuiz($('#quizbox'),films,close2)}
+function navState(id){const l=window.viewList||[];const i=id?l.indexOf(id):-1;
+ $('#fnl').classList.toggle('on',i>0);$('#fnr').classList.toggle('on',i>=0&&i<l.length-1)}
+function stepF(d){const l=window.viewList||[];const i=l.indexOf(shown);const n=l[i+d];if(n)show(n)}
+let fsx=0,fsy=0;
+$('#sheet').addEventListener('touchstart',e=>{fsx=e.touches[0].clientX;fsy=e.touches[0].clientY},{passive:true});
+$('#sheet').addEventListener('touchend',e=>{if(!$('#sheet').classList.contains('on'))return;const dx=e.changedTouches[0].clientX-fsx,dy=e.changedTouches[0].clientY-fsy;
+ if(Math.abs(dx)>70&&Math.abs(dy)<50)stepF(dx<0?1:-1)},{passive:true});
+function openFriendQuiz(){shown=null;$('#card').innerHTML='<div class="handle"></div><div id="quizbox"></div><button class="close" onclick="close2()">Schließen</button>';navState(null);$('#sheet').classList.add('on');Quiz.renderQuiz($('#quizbox'),films,close2)}
 function zoomIt(src){const d=document.createElement('div');d.className='zoomov';d.innerHTML='<img alt="">';d.firstChild.src=src;d.onclick=()=>d.remove();document.body.appendChild(d)}
 function qSync(){const b=document.getElementById('qclr');if(b)b.classList.toggle('on',!!document.getElementById('q').value)}
 function qClear(){document.getElementById('q').value='';draw();qSync();document.getElementById('q').focus()}
