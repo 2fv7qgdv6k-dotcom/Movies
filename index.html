@@ -218,7 +218,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.3';
+const APP_VERSION='1.4';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>cfg.formats||FORMATS;
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -528,32 +528,57 @@ function ocrPick(){document.getElementById('ocrfile').click()}
 async function ocrRun(file){if(!file)return;const out=$('#ocrout');
  out.innerHTML='<p class="mut">Text wird erkannt … beim ersten Mal lädt die Erkennung einige Megabyte.</p>';
  try{await loadTess();const {data}=await Tesseract.recognize(file,'deu+eng');
-  ocrPending=parseBack(data.text);showOcr(ocrPending,data.text)}
+  ocrPending=parseBack(data);showOcr(ocrPending,data.text)}
  catch(e){out.innerHTML='<p>Die Erkennung konnte nicht gestartet werden. Bitte Internetverbindung prüfen.</p>'}}
-const LANG_WORDS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Türkisch','Polnisch','Russisch','Portugiesisch','Niederländisch','Dänisch','Schwedisch'];
-function parseBack(text){
- const s=(text||'').replace(/\s+/g,' ');const r={raw:text};
- const a=s.match(/\b(2[.,]39|2[.,]40|2[.,]35|2[.,]20|1[.,]85|1[.,]78|1[.,]66|1[.,]37|1[.,]33|16:9|4:3)(\s*:\s*1)?/);
- if(a){r.aspect=a[1].replace(',','.').replace(/^(\d\.\d\d)$/,'$1')+(a[1].includes(':')?'':':1')}
- const tones=[];
- const tp=[[/Dolby\s*Atmos/i,'Dolby Atmos'],[/Dolby\s*TrueHD/i,'Dolby TrueHD'],[/Dolby\s*Digital\s*7[.,]1/i,'Dolby Digital 7.1'],[/Dolby\s*Digital\s*5[.,]1/i,'Dolby Digital 5.1'],[/Dolby\s*Digital/i,'Dolby Digital'],[/DTS[-\s]?HD\s*(Master\s*Audio|MA)/i,'DTS-HD MA'],[/DTS[-\s]?HD/i,'DTS-HD'],[/DTS\s*5[.,]1/i,'DTS 5.1'],[/\bDTS\b/i,'DTS'],[/\bStereo\b/i,'Stereo'],[/\bMono\b/i,'Mono']];
- for(const [re,name] of tp){if(re.test(s)&&!tones.includes(name))tones.push(name)}
- const tones2=tones.filter(t=>!(t==='Dolby Digital'&&tones.some(x=>x.startsWith('Dolby Digital '))));
- if(tones2.length)r.ton=tones2.slice(0,3).join(', ');
- const rg=s.match(/Region\s*(?:Code)?\s*[:\-]?\s*(A|B|C|2|ABC|ALL)\b/i)||s.match(/Region\s*([ABC2])\b/i);
- if(rg&&['A','B','C','2'].includes(rg[1].toUpperCase()))r.region=rg[1].toUpperCase();
- const dk=s.match(/(\d)\s*(?:x\s*)?(?:Discs?|Disks?)\b/i);if(dk)r.disks=dk[1];
- const ui=s.search(/Untertitel|Subtitles?/i);
- const before=ui>=0?s.slice(0,ui):s, after=ui>=0?s.slice(ui):'';
- const langs=LANG_WORDS.filter(w=>new RegExp(w,'i').test(before));
- const subs=LANG_WORDS.filter(w=>new RegExp(w,'i').test(after));
- if(langs.length)r.langs=langs.join(', ');
- if(subs.length)r.subs=subs.join(', ');
- const bo=s.match(/(Bonus\w*|Extras|Special Features)[^.]{0,160}/i);
- if(bo)r.bonus=bo[0].trim();
- return r}
+const LANG_WORDS=['Deutsch','Englisch','Französisch','Italienisch','Spanisch','Japanisch','Türkisch','Polnisch','Russisch','Portugiesisch','Niederländisch','Dänisch','Schwedisch','Norwegisch','Finnisch','Ungarisch','Tschechisch','Slowakisch','Rumänisch','Griechisch','Hebräisch','Arabisch','Isländisch','Ukrainisch','Kroatisch','Serbisch','Bulgarisch','Koreanisch','Mandarin','Kantonesisch','Thai','Hindi','Litauisch','Lettisch','Estnisch','Slowenisch'];
+const langRe=w=>new RegExp('\\b'+w+'\\b','i');
+function findLangs(t){return LANG_WORDS.filter(w=>langRe(w).test(t))}
+function findTones(t){const tp=[[/Dolby\s*Atmos/i,'Dolby Atmos'],[/Dolby\s*TrueHD/i,'Dolby TrueHD'],[/Dolby\s*Digital\s*7[.,]1/i,'Dolby Digital 7.1'],[/Dolby\s*Digital\s*5[.,]1/i,'Dolby Digital 5.1'],[/DTS[-\s]?HD\s*(Master\s*Audio|MA)/i,'DTS-HD MA'],[/DTS[-\s]?HD/i,'DTS-HD'],[/DTS\s*5[.,]1/i,'DTS 5.1'],[/\bStereo\b/i,'Stereo'],[/\bMono\b/i,'Mono']];
+ const out=[];for(const [re,n] of tp){if(re.test(t)&&!out.includes(n))out.push(n)}return out}
+function parseBack(data){
+ const r={};const text=data.text||'';const words=(data.words||[]).filter(w=>w.text&&w.text.trim());
+ // disc count from the "DISC 1 / DISC 2 / DISC 3" labels
+ const discs=new Set([...text.matchAll(/DISC\s*([1-9])/gi)].map(m=>m[1]));
+ if(discs.size>=2)r.disks=String(Math.max(...[...discs].map(Number)));
+ const hdr={};
+ words.forEach(w=>{const t=w.text.replace(/[^A-Za-zÄÖÜäöü]/g,'').toUpperCase();if(['BILD','TON','UNTERTITEL'].includes(t)&&!hdr[t])hdr[t]=w.bbox});
+ if(hdr.BILD&&hdr.TON&&hdr.UNTERTITEL){
+  // table found: put every word into the column of its horizontal position
+  const cols=[['BILD',hdr.BILD.x0],['TON',hdr.TON.x0],['UNTERTITEL',hdr.UNTERTITEL.x0]].sort((x,y)=>x[1]-y[1]);
+  const headY=Math.max(hdr.BILD.y1,hdr.TON.y1,hdr.UNTERTITEL.y1);
+  const col={BILD:[],TON:[],UNTERTITEL:[]};
+  words.forEach(w=>{if(w.bbox.y0<=headY)return;const cx=(w.bbox.x0+w.bbox.x1)/2;let c=cols[0][0];cols.forEach(([n,x])=>{if(cx>=x-12)c=n});col[c].push(w.text)});
+  const bild=col.BILD.join(' '),ton=col.TON.join(' '),unt=col.UNTERTITEL.join(' ');
+  const a=bild.match(/(2[.,]39|2[.,]40|2[.,]35|2[.,]20|1[.,]85|1[.,]78|1[.,]66|1[.,]37|1[.,]33)/);
+  if(a)r.aspect=a[1].replace(',','.')+':1';
+  const tones=findTones(ton);if(tones.length)r.ton=tones.slice(0,3).join(', ');
+  const la=findLangs(ton),su=findLangs(unt);
+  if(la.length)r.langs=la.join(', ');
+  if(su.length)r.subs=su.join(', ');
+ }else{
+  // no table recognised: fall back to the full text, without guessing the bonus material
+  const s=text.replace(/\s+/g,' ');
+  const a=s.match(/\b(2[.,]39|2[.,]40|2[.,]35|2[.,]20|1[.,]85|1[.,]78|1[.,]66|1[.,]37|1[.,]33|16:9|4:3)\b/);
+  if(a)r.aspect=a[1].replace(',','.')+(a[1].includes(':')?'':':1');
+  const tones=findTones(s);if(tones.length)r.ton=tones.slice(0,3).join(', ');
+  const ui=s.search(/Untertitel|Subtitles?/i);
+  const before=ui>=0?s.slice(0,ui):s,after=ui>=0?s.slice(ui):'';
+  const la=findLangs(before),su=findLangs(after);
+  if(la.length)r.langs=la.join(', ');if(su.length)r.subs=su.join(', ');
+ }
+ // version and edition words anywhere on the cover
+ const VER=[[/\buncut\b/i,'Uncut'],[/director[’'`s]*\s*cut|regisseurs(?:-)?fassung/i,"Director's Cut"],[/kinofassung|theatrical/i,'Kinofassung'],[/extended|erweiterte\s+fassung/i,'Extended'],[/unrated/i,'Unrated'],[/steelbook/i,'Steelbook'],[/mediabook/i,'Mediabook'],[/limited\s+edition|limitiert/i,'Limitiert'],[/digibook/i,'Digibook']];
+ const vers=VER.filter(([re])=>re.test(text)).map(([,n])=>n);
+ if(vers.length)r.edition=vers.join(', ');
+ if(/\b3D\b/.test(text))r.format='3D Blu-Ray';
+ else if(/UHD|4K/i.test(text))r.format='4K UHD';
+ // bonus material: only the keywords, never whole sentences
+ const BON=[[/making[\s-]*of/i,'Making-of'],[/interviews?/i,'Interviews'],[/kommentar|commentary/i,'Kommentare'],[/deleted\s*scenes|entfallene\s*szenen|alternative\s*szenen/i,'Entfallene Szenen'],[/storyboards?/i,'Storyboards'],[/featurettes?/i,'Featurettes'],[/musikvideo|music\s*video/i,'Musikvideo'],[/bildergalerie|photo\s*gallery|galerie/i,'Bildergalerie'],[/trailer/i,'Trailer'],[/dokumentation|documentary/i,'Dokumentation']];
+ const bon=BON.filter(([re])=>re.test(text)).map(([,n])=>n);
+ if(bon.length)r.bonus=bon.join(', ');
+ r.raw=text;return r}
 function showOcr(r,raw){
- const items=[['Bildformat','aspect'],['Tonformat','ton'],['Region','region'],['Anzahl Disks','disks'],['Sprachen','langs'],['Untertitel','subs'],['Bonusmaterial (Vorschlag)','bonus']].filter(([l,k])=>r[k]);
+ const items=[['Format','format'],['Edition / Version','edition'],['Bildformat','aspect'],['Tonformat','ton'],['Region','region'],['Anzahl Disks','disks'],['Sprachen (Ton)','langs'],['Untertitel','subs'],['Bonusmaterial (Schlagworte)','bonus']].filter(([l,k])=>r[k]);
  $('#ocrout').innerHTML=items.length
   ?`<div style="margin-top:8px">${items.map(([l,k])=>`<div><b>${l}:</b> ${esc(r[k])}</div>`).join('')}</div>
     <div class="bar"><button class="p" type="button" onclick="applyOcr()">Übernehmen</button></div>
@@ -561,7 +586,7 @@ function showOcr(r,raw){
   :`<p>Nichts Eindeutiges erkannt. Bitte ein schärferes Foto machen, mit guter Beleuchtung und gerade von oben.</p><details><summary class="mut">erkannter Text</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(raw||'')}</pre></details>`}
 function applyOcr(){const r=ocrPending||{};
  if(r.aspect)$('#as').value=r.aspect;if(r.ton)$('#ton').value=r.ton;if(r.region)$('#rg2').value=r.region;
- if(r.disks)$('#dk').value=r.disks;if(r.langs)$('#la').value=r.langs;if(r.subs)$('#su').value=r.subs;if(r.bonus)$('#bo').value=r.bonus;
+ if(r.disks)$('#dk').value=r.disks;if(r.langs)$('#la').value=r.langs;if(r.subs)$('#su').value=r.subs;if(r.edition)$('#ed').value=r.edition;if(r.bonus)$('#bo').value=r.bonus;if(r.format){const fo=[...$('#fm').options].find(o=>o.value.toLowerCase()===r.format.toLowerCase()||o.value.toLowerCase().includes(r.format.toLowerCase().split(' ')[0]));if(fo)$('#fm').value=fo.value}
  $('#ocrout').insertAdjacentHTML('beforeend','<p class="mut">Übernommen. Bitte kurz prüfen und dann speichern.</p>')}
 function setTab(t){tab=t;$('#t1').className=t==='films'?'p':'';$('#t2').className=t==='wish'?'p':'';
  ['#ff','#fr','#so','#bnb','#bad','#bns','#bvw'].forEach(s=>$(s).style.display=t==='films'?'':'none');
