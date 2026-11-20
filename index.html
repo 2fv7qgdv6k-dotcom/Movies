@@ -181,7 +181,7 @@ header{background:var(--bg1);backdrop-filter:none;-webkit-backdrop-filter:none;b
 header.sc{background:var(--glass2);backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);border-bottom-color:var(--bd)}
 
 /* scrolling inside an open window never moves the library behind it */
-dialog{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+dialog{overscroll-behavior:contain}
 body.lock{position:fixed;left:0;right:0;overflow:hidden;width:100%}
 
 /* windows scroll on their own: no backdrop blur inside scrollable windows */
@@ -213,6 +213,17 @@ dialog::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!imp
 .az .off{color:var(--bd);width:20px;height:15px;text-align:center}
 #grid{padding-right:30px}
 .kbg{height:460px!important;opacity:.5!important}
+.navwrap{position:sticky;top:0;height:0;z-index:5;overflow:visible}
+.navb{position:absolute;top:42vh;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:0;background:rgba(20,20,30,.45);color:#fff;font-size:28px;line-height:1;padding:0;cursor:pointer}
+.navb.nl{left:-6px}.navb.nr{right:-6px}
+dialog{width:min(1040px,95vw)}
+.mv{padding:18px 20px}
+.mvh{font-size:17px}
+.kv{font-size:16px;grid-template-columns:150px 1fr;gap:10px 14px}
+.k{font-size:12px;padding-top:5px}
+.tg{font-size:14px;padding:4px 11px;margin:3px 5px 3px 0}
+.mvn{font-size:15px}
+.ttl{font-size:30px}
 </style></head><body>
 <header>
 <h1>Filme <span class="mut" id="n"></span></h1>
@@ -239,7 +250,7 @@ const IMG='https://image.tmdb.org/t/p/';
 let films=JSON.parse(localStorage.getItem('films')||'[]');
 let cfg=JSON.parse(localStorage.getItem('cfg')||'{}');
 let wish=JSON.parse(localStorage.getItem('wish')||'[]');
-const APP_VERSION='1.7';
+const APP_VERSION='1.7.1';
 let tab='films',onCode=null,lastQ={t:'',code:''},adv={},noE=false,noSeen=false,view=localStorage.getItem('view')||'grid';
 const allFormats=()=>[...(cfg.formats||FORMATS)].sort((x,y)=>x.localeCompare(y,'de'));
 const _save=()=>{localStorage.setItem('wish',JSON.stringify(wish));localStorage.setItem('films',JSON.stringify(films));localStorage.setItem('cfg',JSON.stringify(cfg))};
@@ -414,8 +425,8 @@ $('#dlg').addEventListener('touchstart',e=>{swx=e.touches[0].clientX;swy=e.touch
 $('#dlg').addEventListener('touchend',e=>{if(!$('#dlg').querySelector('.abar'))return;const dx=e.changedTouches[0].clientX-swx,dy=e.changedTouches[0].clientY-swy;
  if(Math.abs(dx)>70&&Math.abs(dy)<50){if(swx<30&&dx>0)$('#dlg').close();else stepFilm(dx<0?1:-1)}},{passive:true});
 function navHtml(id){const l=window.viewList||[];const i=l.indexOf(id);if(i<0||l.length<2)return '';
- return (i>0?'<button class="navb nl" onclick="stepFilm(-1)" aria-label="Vorheriger Film">‹</button>':'')
-  +(i<l.length-1?'<button class="navb nr" onclick="stepFilm(1)" aria-label="Nächster Film">›</button>':'')}
+ return '<div class="navwrap">'+(i>0?'<button class="navb nl" onclick="stepFilm(-1)" aria-label="Vorheriger Film">‹</button>':'')
+  +(i<l.length-1?'<button class="navb nr" onclick="stepFilm(1)" aria-label="Nächster Film">›</button>':'')+'</div>'}
 function stepFilm(d){const l=window.viewList||[];const i=l.indexOf(currentDetailId);const n=l[i+d];if(n){window.navDir=d;openDetail(n)}}
 function slideIn(dl){const d=window.navDir||0;window.navDir=0;if(!d)return;const row=dl.querySelector('.row');if(row)row.animate([{transform:`translateX(${d*70}px)`,opacity:0},{transform:'none',opacity:1}],{duration:320,easing:'cubic-bezier(.2,.9,.3,1)'})}
 function myVersionHtml(f){
